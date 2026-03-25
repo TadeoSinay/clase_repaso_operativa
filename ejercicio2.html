@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ejercicio 2 – Dado Cargado</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">📊 IO · <span>Probabilidad</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Inicio</a></li>
+    <li><a href="ejercicio1.html">Ejercicio 1</a></li>
+    <li><a href="ejercicio2.html" class="active">Ejercicio 2</a></li>
+    <li><a href="ejercicio3.html">Ejercicio 3</a></li>
+  </ul>
+</nav>
+
+<div class="ex-page">
+
+  <!-- HEADER -->
+  <div class="ex-page-header">
+    <div class="ex-big-number">2</div>
+    <div>
+      <h1>Dado Cargado</h1>
+      <p>Distribución de probabilidad no uniforme — proporcional al valor de la cara</p>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Progreso del ejercicio</span>
+      <span id="prog-label">0 / 4 pasos</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <!-- ENUNCIADO -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📋</span> Enunciado</div>
+    <div class="card-body">
+      <div class="problem-box">
+        Un dado está <strong>cargado</strong> de modo que la probabilidad de que salga la cara <em>k</em> es proporcional al número <em>k</em>. Es decir:
+      </div>
+      <div class="formula-box" style="margin-top:1rem;">
+        \[ P(k) = k \cdot p \qquad \text{para } k = 1, 2, 3, 4, 5, 6 \]
+      </div>
+      <p style="margin-top:1rem; color:#6b7a8d;">
+        Determinar: (a) La probabilidad de obtener un <strong>6</strong> &nbsp;·&nbsp;
+        (b) La probabilidad de obtener un número <strong>impar</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- VISUALIZACION DEL DADO -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🎲</span> Distribución de Probabilidades</div>
+    <div class="card-body">
+      <p style="color:#6b7a8d; margin-bottom:1.2rem; font-size:0.93rem;">
+        En un dado justo cada cara tiene probabilidad 1/6 ≈ 16.7%. En este dado cargado, la probabilidad crece proporcionalmente:
+      </p>
+      <div class="bar-chart" id="dist-chart">
+        <!-- bars rendered by JS -->
+      </div>
+      <div class="chart-legend">
+        <span><span class="dot-navy"></span> Dado justo (1/6 cada cara)</span>
+        <span><span class="dot-orange"></span> Dado cargado (proporcional a k)</span>
+      </div>
+      <div style="margin-top:1.2rem;">
+        <table class="combo-table">
+          <thead>
+            <tr>
+              <th>Cara (k)</th>
+              <th>P(k) = k·p</th>
+              <th>Fracción</th>
+              <th>Decimal</th>
+            </tr>
+          </thead>
+          <tbody id="prob-table"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASOS -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📝</span> Resolución Paso a Paso</div>
+    <div class="card-body">
+      <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+        <button class="reveal-all-btn" onclick="revealAll()">Revelar todos los pasos</button>
+        <button class="reveal-all-btn" style="background:#dc3545;" onclick="resetAll()">Reiniciar</button>
+      </div>
+
+      <div class="steps-container">
+
+        <!-- STEP 1 -->
+        <div class="step" id="step-1">
+          <div class="step-header" onclick="toggleStep(1)">
+            <div class="step-num">1</div>
+            <span class="step-title">Encontrar el valor de p usando la condición de normalización</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(1)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-1">
+            <p>La suma de todas las probabilidades debe ser igual a 1:</p>
+            <div class="formula-box">
+              \[ \sum_{k=1}^{6} P(k) = 1 \]
+            </div>
+            <div class="formula-box">
+              \[ p + 2p + 3p + 4p + 5p + 6p = 1 \]
+            </div>
+            <div class="formula-box">
+              \[ p(1 + 2 + 3 + 4 + 5 + 6) = 1 \qquad \Rightarrow \qquad 21p = 1 \]
+            </div>
+            <div class="result-highlight">\( p = \dfrac{1}{21} \)</div>
+            <p style="margin-top:0.75rem; color:#6b7a8d; font-size:0.9rem;">
+              💡 <em>La suma 1+2+...+6 = 21 es la suma de los primeros 6 enteros positivos.</em>
+            </p>
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step" id="step-2">
+          <div class="step-header" onclick="toggleStep(2)">
+            <div class="step-num">2</div>
+            <span class="step-title">Calcular P(6)</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(2)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-2">
+            <p>Con el valor de p encontrado:</p>
+            <div class="formula-box">
+              \[ P(6) = 6 \cdot p = 6 \cdot \frac{1}{21} = \frac{6}{21} \]
+            </div>
+            <p>Simplificando dividiendo por 3:</p>
+            <div class="result-highlight">\( P(6) = \dfrac{2}{7} \approx 0{,}2857 \)</div>
+            <p style="margin-top:0.75rem; color:#6b7a8d; font-size:0.9rem;">
+              📊 <em>Comparación: en un dado justo P(6) = 1/6 ≈ 16.7%. En este dado cargado P(6) ≈ 28.6%, casi el doble.</em>
+            </p>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step" id="step-3">
+          <div class="step-header" onclick="toggleStep(3)">
+            <div class="step-num">3</div>
+            <span class="step-title">Calcular P(número impar)</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(3)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-3">
+            <p>Los números impares son 1, 3 y 5. Como estos eventos son mutuamente excluyentes:</p>
+            <div class="formula-box">
+              \[ P(\text{impar}) = P(1) + P(3) + P(5) \]
+            </div>
+            <div class="formula-box">
+              \[ = 1p + 3p + 5p = 9p = 9 \cdot \frac{1}{21} = \frac{9}{21} \]
+            </div>
+            <p>Simplificando:</p>
+            <div class="result-highlight">\( P(\text{impar}) = \dfrac{3}{7} \approx 0{,}4286 \)</div>
+            <p style="margin-top:0.75rem; color:#6b7a8d; font-size:0.9rem;">
+              📊 <em>En un dado justo P(impar) = 3/6 = 0.5. Como las caras pares (2,4,6) tienen más probabilidad, P(impar) baja a 3/7 ≈ 42.9%.</em>
+            </p>
+          </div>
+        </div>
+
+        <!-- STEP 4 (verificación) -->
+        <div class="step" id="step-4">
+          <div class="step-header" onclick="toggleStep(4)">
+            <div class="step-num">4</div>
+            <span class="step-title">Verificación: P(par) + P(impar) = 1</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(4)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-4">
+            <p>Comprobamos que el resultado es correcto:</p>
+            <div class="formula-box">
+              \[ P(\text{par}) = P(2) + P(4) + P(6) = 2p + 4p + 6p = 12p = \frac{12}{21} = \frac{4}{7} \]
+            </div>
+            <div class="formula-box">
+              \[ P(\text{impar}) + P(\text{par}) = \frac{3}{7} + \frac{4}{7} = \frac{7}{7} = 1 \checkmark \]
+            </div>
+            <div class="result-highlight">✅ Verificación correcta</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- SIMULADOR -->
+  <div class="card">
+    <div class="card-header"><span class="icon">⚡</span> Simulador de Dado Cargado</div>
+    <div class="card-body">
+      <p style="color:#6b7a8d; margin-bottom:1.5rem; font-size:0.93rem;">
+        Tirá el dado cargado y observá cómo la distribución empírica converge a la teórica al aumentar el número de lanzamientos.
+      </p>
+      <div class="dice-area">
+        <div class="dice-display">
+          <div class="die" id="die2">🎲</div>
+        </div>
+        <div class="sim-controls">
+          <button class="sim-btn" onclick="rollOnce()">🎲 Tirar 1 vez</button>
+          <button class="sim-btn" onclick="rollN()" id="roll-n-btn">⚡ Tirar <span id="roll-n-label">100</span> veces</button>
+          <label style="font-size:0.88rem;color:#6b7a8d; display:flex; align-items:center; gap:0.5rem;">
+            Lanzamientos:
+            <input type="range" min="10" max="10000" step="10" value="100"
+              oninput="document.getElementById('roll-n-label').textContent=this.value; document.getElementById('roll-input').textContent=this.value" id="n-slider">
+            <span id="roll-input">100</span>
+          </label>
+          <button class="sim-btn" style="background:#dc3545;" onclick="resetSim()">Reset</button>
+        </div>
+
+        <div class="sim-stats">
+          <div class="stat-box">
+            <div class="stat-val" id="s-total">0</div>
+            <div class="stat-label">Total lanzamientos</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="s-sixes">0</div>
+            <div class="stat-label">Veces que salió 6</div>
+            <div class="stat-pct" id="s-six-pct">—</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="s-odds">0</div>
+            <div class="stat-label">Veces que salió impar</div>
+            <div class="stat-pct" id="s-odd-pct">—</div>
+          </div>
+        </div>
+
+        <!-- Empirical chart -->
+        <div style="width:100%">
+          <p style="font-size:0.85rem; color:#6b7a8d; margin-bottom:0.5rem; text-align:center;">
+            Distribución empírica vs teórica por cara
+          </p>
+          <div class="bar-chart" id="sim-chart"></div>
+          <div class="chart-legend">
+            <span><span class="dot-navy"></span> Teórico</span>
+            <span><span class="dot-orange"></span> Empírico</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THEORY -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📚</span> Conceptos Clave</div>
+    <div class="card-body">
+      <ul class="ref-list">
+        <li>
+          <span style="font-size:1.4rem">∑</span>
+          <div>
+            <a href="#">Condición de normalización</a>
+            <span> — La suma de todas las probabilidades del espacio muestral = 1</span>
+          </div>
+        </li>
+        <li>
+          <span style="font-size:1.4rem">⊕</span>
+          <div>
+            <a href="#">Eventos mutuamente excluyentes</a>
+            <span> — P(A∪B) = P(A) + P(B) cuando A∩B = ∅</span>
+          </div>
+        </li>
+        <li>
+          <span style="font-size:1.4rem">📊</span>
+          <div>
+            <a href="#">Distribución de probabilidad discreta</a>
+            <span> — Asignación de probabilidades a cada resultado posible</span>
+          </div>
+        </li>
+        <li>
+          <span style="font-size:1.4rem">📄</span>
+          <div>
+            <a href="TEO_probabilidad.pdf" target="_blank">Apunte Teórico — TEO_probabilidad.pdf</a>
+            <span> — Sección: distribuciones discretas</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- VIDEOS -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🎥</span> Videos Didácticos</div>
+    <div class="card-body">
+      <div class="videos-grid">
+        <div class="video-item">
+          <h4>Espacio muestral y distribuciones de probabilidad</h4>
+          <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/uzkc-qNVoOk"
+              title="Sample space probability" allowfullscreen loading="lazy"></iframe>
+          </div>
+        </div>
+        <div class="video-item">
+          <h4>¿Qué es un dado cargado? — Probabilidad no uniforme</h4>
+          <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/KzfWUEJjG18"
+              title="Loaded dice probability" allowfullscreen loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="ex-nav">
+    <a href="ejercicio1.html">← Ejercicio 1</a>
+    <a href="ejercicio3.html">Ejercicio 3 →</a>
+  </div>
+
+</div>
+
+<footer>
+  Investigación Operativa · Repaso de Probabilidad · <strong>Ejercicio 2</strong>
+</footer>
+
+<script>
+// ===== STEPS =====
+const totalSteps = 4;
+let revealed = new Set();
+
+function revealStep(n) {
+  const step = document.getElementById('step-' + n);
+  const content = document.getElementById('content-' + n);
+  step.classList.add('revealed');
+  content.classList.add('visible');
+  revealed.add(n);
+  updateProgress();
+  if (window.MathJax) MathJax.typesetPromise([content]);
+}
+
+function toggleStep(n) {
+  const content = document.getElementById('content-' + n);
+  if (!content.classList.contains('visible')) revealStep(n);
+}
+
+function revealAll() {
+  for (let i = 1; i <= totalSteps; i++) revealStep(i);
+}
+
+function resetAll() {
+  revealed.clear();
+  for (let i = 1; i <= totalSteps; i++) {
+    document.getElementById('step-' + i).classList.remove('revealed');
+    document.getElementById('content-' + i).classList.remove('visible');
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const pct = (revealed.size / totalSteps) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = revealed.size + ' / ' + totalSteps + ' pasos';
+}
+
+// ===== PROBABILITY DISTRIBUTION =====
+const p = 1 / 21;
+const theoretical = [1, 2, 3, 4, 5, 6].map(k => k * p);
+const fairProb = 1 / 6;
+const fractions = ['1/21', '2/21', '1/7', '4/21', '5/21', '2/7'];
+
+// Table
+const tbody = document.getElementById('prob-table');
+[1,2,3,4,5,6].forEach((k, i) => {
+  const row = document.createElement('tr');
+  row.innerHTML = `
+    <td><strong>${k}</strong></td>
+    <td>${k}/21</td>
+    <td>${fractions[i]}</td>
+    <td>${(theoretical[i]*100).toFixed(2)}%</td>
+  `;
+  tbody.appendChild(row);
+});
+
+// Distribution chart
+function buildDistChart(container, empirical) {
+  container.innerHTML = '';
+  const maxH = 120;
+  const maxVal = Math.max(...theoretical, ...(empirical || []));
+
+  [0,1,2,3,4,5].forEach(i => {
+    const col = document.createElement('div');
+    col.className = 'bar-col';
+
+    const thH = Math.round((theoretical[i] / maxVal) * maxH);
+    const thBar = document.createElement('div');
+    thBar.className = 'bar-fill theoretical';
+    thBar.style.height = thH + 'px';
+    thBar.title = `Teórico: ${(theoretical[i]*100).toFixed(1)}%`;
+
+    const label = document.createElement('div');
+    label.className = 'bar-label';
+    label.textContent = i + 1;
+
+    col.appendChild(thBar);
+
+    if (empirical) {
+      const empH = Math.round((empirical[i] / maxVal) * maxH);
+      const empBar = document.createElement('div');
+      empBar.className = 'bar-fill empirical';
+      empBar.style.height = empH + 'px';
+      empBar.title = `Empírico: ${(empirical[i]*100).toFixed(1)}%`;
+      col.appendChild(empBar);
+    }
+
+    col.appendChild(label);
+    container.appendChild(col);
+  });
+}
+
+buildDistChart(document.getElementById('dist-chart'), null);
+
+// ===== SIMULATOR =====
+let simCounts = [0,0,0,0,0,0];
+let simTotal = 0;
+
+function weightedRoll() {
+  const r = Math.random() * 21;
+  let cum = 0;
+  for (let k = 1; k <= 6; k++) {
+    cum += k;
+    if (r < cum) return k;
+  }
+  return 6;
+}
+
+const dieFaces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+
+function rollOnce() {
+  const result = weightedRoll();
+  const die = document.getElementById('die2');
+  die.classList.remove('rolling');
+  void die.offsetWidth;
+  die.classList.add('rolling');
+  die.textContent = result;
+
+  simCounts[result - 1]++;
+  simTotal++;
+  updateSimStats();
+
+  setTimeout(() => die.classList.remove('rolling'), 500);
+}
+
+function rollN() {
+  const n = parseInt(document.getElementById('n-slider').value);
+  for (let i = 0; i < n; i++) {
+    const result = weightedRoll();
+    simCounts[result - 1]++;
+  }
+  simTotal += n;
+
+  // Animate last roll
+  const last = simCounts.indexOf(Math.max(...simCounts));
+  const die = document.getElementById('die2');
+  die.textContent = last + 1;
+  die.classList.remove('rolling');
+  void die.offsetWidth;
+  die.classList.add('rolling');
+  setTimeout(() => die.classList.remove('rolling'), 500);
+
+  updateSimStats();
+}
+
+function resetSim() {
+  simCounts = [0,0,0,0,0,0];
+  simTotal = 0;
+  document.getElementById('die2').textContent = '🎲';
+  updateSimStats();
+}
+
+function updateSimStats() {
+  document.getElementById('s-total').textContent = simTotal;
+  document.getElementById('s-sixes').textContent = simCounts[5];
+  document.getElementById('s-odds').textContent = simCounts[0] + simCounts[2] + simCounts[4];
+
+  if (simTotal > 0) {
+    const sixPct = ((simCounts[5] / simTotal) * 100).toFixed(1);
+    const oddPct = (((simCounts[0]+simCounts[2]+simCounts[4]) / simTotal) * 100).toFixed(1);
+    document.getElementById('s-six-pct').textContent = sixPct + '% (teórico: 28.6%)';
+    document.getElementById('s-odd-pct').textContent = oddPct + '% (teórico: 42.9%)';
+  } else {
+    document.getElementById('s-six-pct').textContent = '—';
+    document.getElementById('s-odd-pct').textContent = '—';
+  }
+
+  const empirical = simTotal > 0 ? simCounts.map(c => c / simTotal) : null;
+  buildDistChart(document.getElementById('sim-chart'), empirical);
+}
+
+updateSimStats();
+</script>
+
+</body>
+</html>
