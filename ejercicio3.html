@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ejercicio 3 – Tres Dados Simultáneos</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">📊 IO · <span>Probabilidad</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Inicio</a></li>
+    <li><a href="ejercicio1.html">Ejercicio 1</a></li>
+    <li><a href="ejercicio2.html">Ejercicio 2</a></li>
+    <li><a href="ejercicio3.html" class="active">Ejercicio 3</a></li>
+  </ul>
+</nav>
+
+<div class="ex-page">
+
+  <!-- HEADER -->
+  <div class="ex-page-header">
+    <div class="ex-big-number">3</div>
+    <div>
+      <h1>Tres Dados Simultáneos</h1>
+      <p>Independencia de eventos y conteo de casos favorables</p>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Progreso del ejercicio</span>
+      <span id="prog-label">0 / 5 pasos</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <!-- ENUNCIADO -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📋</span> Enunciado</div>
+    <div class="card-body">
+      <div class="problem-box">
+        Se lanzan <strong>tres dados justos</strong> en forma simultánea. Cada dado tiene caras numeradas del 1 al 6 con igual probabilidad de 1/6.
+      </div>
+      <p style="margin-top:1rem; color:#6b7a8d;">
+        Calcular: &nbsp;
+        (a) La probabilidad de que los <strong>tres dados muestren 6</strong> &nbsp;·&nbsp;
+        (b) La probabilidad de que la <strong>suma de los tres dados sea 7</strong>
+      </p>
+      <div style="margin-top:1.2rem; background:#eef4ff; border-radius:8px; padding:1rem 1.2rem;">
+        <strong>Dato clave:</strong> El espacio muestral total tiene \( 6^3 = 216 \) resultados posibles igualmente probables.
+      </div>
+    </div>
+  </div>
+
+  <!-- SIMULADOR -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🎲</span> Simulador de Tres Dados</div>
+    <div class="card-body">
+      <div class="dice-area">
+        <div class="dice-display">
+          <div class="die" id="die-a">🎲</div>
+          <div class="die" id="die-b">🎲</div>
+          <div class="die" id="die-c">🎲</div>
+        </div>
+        <div id="roll-result" style="font-size:1.05rem; font-weight:600; color:#1a3a5c; min-height:28px; text-align:center;"></div>
+        <div class="sim-controls">
+          <button class="sim-btn" onclick="rollOnce3()">🎲 Tirar 3 dados</button>
+          <button class="sim-btn" onclick="rollN3()" >⚡ Tirar <span id="roll-n-label3">1000</span> veces</button>
+          <label style="font-size:0.88rem;color:#6b7a8d; display:flex; align-items:center; gap:0.5rem;">
+            Lanzamientos:
+            <input type="range" min="100" max="50000" step="100" value="1000"
+              oninput="document.getElementById('roll-n-label3').textContent=this.value" id="n-slider3">
+            <span id="roll-n-label3-2">1000</span>
+          </label>
+          <button class="sim-btn" style="background:#dc3545;" onclick="resetSim3()">Reset</button>
+        </div>
+
+        <div class="sim-stats">
+          <div class="stat-box">
+            <div class="stat-val" id="s3-total">0</div>
+            <div class="stat-label">Total lanzamientos</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="s3-triple6">0</div>
+            <div class="stat-label">Veces (6,6,6)</div>
+            <div class="stat-pct" id="s3-t6-pct">—</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-val" id="s3-sum7">0</div>
+            <div class="stat-label">Veces suma = 7</div>
+            <div class="stat-pct" id="s3-s7-pct">—</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO A PASO -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📝</span> Resolución Paso a Paso</div>
+    <div class="card-body">
+      <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+        <button class="reveal-all-btn" onclick="revealAll()">Revelar todos los pasos</button>
+        <button class="reveal-all-btn" style="background:#dc3545;" onclick="resetAll()">Reiniciar</button>
+      </div>
+
+      <div class="steps-container">
+
+        <!-- STEP 1 -->
+        <div class="step" id="step-1">
+          <div class="step-header" onclick="toggleStep(1)">
+            <div class="step-num">1</div>
+            <span class="step-title">Espacio muestral total</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(1)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-1">
+            <p>Al lanzar tres dados simultáneamente, cada dado puede mostrar 6 valores. El espacio muestral es:</p>
+            <div class="formula-box">
+              \[ |\Omega| = 6 \times 6 \times 6 = 6^3 = 216 \text{ resultados} \]
+            </div>
+            <p>Cada resultado es una terna ordenada <em>(d₁, d₂, d₃)</em> donde cada dᵢ ∈ {1,2,3,4,5,6}.</p>
+            <p style="margin-top:0.75rem; color:#6b7a8d; font-size:0.9rem;">
+              💡 <em>Como los dados son justos, cada una de las 216 ternas tiene la misma probabilidad: 1/216.</em>
+            </p>
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step" id="step-2">
+          <div class="step-header" onclick="toggleStep(2)">
+            <div class="step-num">2</div>
+            <span class="step-title">P(tres dados muestran 6)</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(2)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-2">
+            <p>Definimos los eventos independientes: D₁=6, D₂=6, D₃=6. Como los dados son <strong>independientes</strong>:</p>
+            <div class="formula-box">
+              \[ P(D_1\!=\!6 \cap D_2\!=\!6 \cap D_3\!=\!6) = P(D_1\!=\!6) \cdot P(D_2\!=\!6) \cdot P(D_3\!=\!6) \]
+            </div>
+            <div class="formula-box">
+              \[ = \frac{1}{6} \times \frac{1}{6} \times \frac{1}{6} = \frac{1}{216} \]
+            </div>
+            <div class="result-highlight">\( P(\text{triple 6}) = \dfrac{1}{216} \approx 0{,}00463 \approx 0{,}46\% \)</div>
+            <p style="margin-top:0.75rem; color:#6b7a8d; font-size:0.9rem;">
+              💡 <em>Solo hay 1 caso favorable (6,6,6) entre 216 posibles. Es un evento muy poco frecuente.</em>
+            </p>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step" id="step-3">
+          <div class="step-header" onclick="toggleStep(3)">
+            <div class="step-num">3</div>
+            <span class="step-title">Contar casos favorables: suma = 7</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(3)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-3">
+            <p>Buscamos todas las ternas (d₁, d₂, d₃) con d₁+d₂+d₃ = 7, donde cada dᵢ ∈ {1,...,6}.</p>
+            <p style="margin-bottom:0.75rem;">Las combinaciones de <strong>tipo</strong> (sin importar el orden) son:</p>
+            <table class="combo-table" style="margin-bottom:1rem;">
+              <thead>
+                <tr><th>Tipo</th><th>Ejemplo</th><th>Permutaciones</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>(1, 1, 5)</td><td>1+1+5=7</td><td>3 (posición del 5)</td></tr>
+                <tr><td>(1, 2, 4)</td><td>1+2+4=7</td><td>6 (todas distintas)</td></tr>
+                <tr><td>(1, 3, 3)</td><td>1+3+3=7</td><td>3 (posición del 1)</td></tr>
+                <tr><td>(2, 2, 3)</td><td>2+2+3=7</td><td>3 (posición del 3)</td></tr>
+                <tr><td><strong>Total</strong></td><td></td><td><strong>15 casos</strong></td></tr>
+              </tbody>
+            </table>
+            <div class="result-highlight">15 casos favorables para suma = 7</div>
+          </div>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="step" id="step-4">
+          <div class="step-header" onclick="toggleStep(4)">
+            <div class="step-num">4</div>
+            <span class="step-title">P(suma = 7)</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(4)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-4">
+            <p>Aplicando la definición clásica de probabilidad:</p>
+            <div class="formula-box">
+              \[ P(\text{suma} = 7) = \frac{\text{casos favorables}}{\text{casos totales}} = \frac{15}{216} \]
+            </div>
+            <p>Simplificando (dividiendo por 3):</p>
+            <div class="formula-box">
+              \[ P(\text{suma} = 7) = \frac{5}{72} \]
+            </div>
+            <div class="result-highlight">\( P(\text{suma} = 7) = \dfrac{5}{72} \approx 0{,}0694 \approx 6{,}94\% \)</div>
+          </div>
+        </div>
+
+        <!-- STEP 5 -->
+        <div class="step" id="step-5">
+          <div class="step-header" onclick="toggleStep(5)">
+            <div class="step-num">5</div>
+            <span class="step-title">¿Por qué suma=7 es la suma más probable?</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(5)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-5">
+            <p>La distribución de la suma de tres dados es aproximadamente <strong>normal</strong> centrada en:</p>
+            <div class="formula-box">
+              \[ \mu = 3 \times \frac{1+6}{2} = 3 \times 3{,}5 = 10{,}5 \]
+            </div>
+            <p>Los valores extremos (suma=3 o suma=18) tienen solo 1 combinación, mientras que la suma=10 y suma=11 son las más frecuentes con 27 combinaciones cada una.</p>
+            <p style="margin-top:0.75rem; color:#6b7a8d; font-size:0.9rem;">
+              📊 <em>La suma=7 tiene 15 casos. No es la más probable, pero es mucho más frecuente que el triple 6.</em>
+            </p>
+            <div id="sum-chart-wrap" style="margin-top:1rem;">
+              <p style="font-size:0.85rem; color:#6b7a8d; margin-bottom:0.5rem; text-align:center;">
+                Distribución de sumas posibles con 3 dados (3 a 18)
+              </p>
+              <div id="sum-dist-chart" style="display:flex; align-items:flex-end; gap:3px; height:100px; padding:0 0.5rem;"></div>
+              <div style="display:flex; justify-content:space-between; padding:0 0.5rem; font-size:0.72rem; color:#6b7a8d; margin-top:0.25rem;">
+                <span>3</span><span>5</span><span>7★</span><span>9</span><span>11</span><span>13</span><span>15</span><span>18</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- COMBINACIONES COMPLETAS -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📋</span> Todas las Combinaciones con Suma = 7</div>
+    <div class="card-body">
+      <p style="color:#6b7a8d; margin-bottom:1rem; font-size:0.93rem;">
+        Las 15 ternas ordenadas (d₁, d₂, d₃) que suman 7:
+      </p>
+      <table class="combo-table">
+        <thead>
+          <tr><th>#</th><th>d₁</th><th>d₂</th><th>d₃</th><th>Suma</th></tr>
+        </thead>
+        <tbody id="combos-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RESUMEN -->
+  <div class="card">
+    <div class="card-header"><span class="icon">✅</span> Resumen de Resultados</div>
+    <div class="card-body">
+      <div class="calc-results">
+        <div class="calc-result-item">
+          <div class="label">Espacio muestral</div>
+          <div class="value">6³ = 216</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">P(triple 6)</div>
+          <div class="value">1/216 ≈ 0.46%</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">Casos suma = 7</div>
+          <div class="value">15 casos</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">P(suma = 7)</div>
+          <div class="value">5/72 ≈ 6.94%</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THEORY -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📚</span> Conceptos Clave</div>
+    <div class="card-body">
+      <ul class="ref-list">
+        <li>
+          <span style="font-size:1.4rem">⊗</span>
+          <div>
+            <a href="#">Independencia de eventos</a>
+            <span> — P(A∩B∩C) = P(A)·P(B)·P(C) cuando son independientes</span>
+          </div>
+        </li>
+        <li>
+          <span style="font-size:1.4rem">🔢</span>
+          <div>
+            <a href="#">Probabilidad clásica (Laplace)</a>
+            <span> — P = casos favorables / casos totales en espacio equiprobable</span>
+          </div>
+        </li>
+        <li>
+          <span style="font-size:1.4rem">📐</span>
+          <div>
+            <a href="#">Conteo y combinatoria</a>
+            <span> — Permutaciones de elementos repetidos: n!/(n₁!·n₂!·...)</span>
+          </div>
+        </li>
+        <li>
+          <span style="font-size:1.4rem">📄</span>
+          <div>
+            <a href="TEO_probabilidad.pdf" target="_blank">Apunte Teórico — TEO_probabilidad.pdf</a>
+            <span> — Secciones de independencia y regla del producto</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- VIDEOS -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🎥</span> Videos Didácticos</div>
+    <div class="card-body">
+      <div class="videos-grid">
+        <div class="video-item">
+          <h4>Probabilidad con múltiples dados — Khan Academy</h4>
+          <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/mkyZ45KQYi4"
+              title="Probability multiple dice" allowfullscreen loading="lazy"></iframe>
+          </div>
+        </div>
+        <div class="video-item">
+          <h4>Conteo y principio multiplicativo</h4>
+          <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/2AoxCkySv34"
+              title="Counting principle probability" allowfullscreen loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="ex-nav">
+    <a href="ejercicio2.html">← Ejercicio 2</a>
+    <a href="index.html">Inicio →</a>
+  </div>
+
+</div>
+
+<footer>
+  Investigación Operativa · Repaso de Probabilidad · <strong>Ejercicio 3</strong>
+</footer>
+
+<script>
+// ===== STEPS =====
+const totalSteps = 5;
+let revealed = new Set();
+
+function revealStep(n) {
+  const step = document.getElementById('step-' + n);
+  const content = document.getElementById('content-' + n);
+  step.classList.add('revealed');
+  content.classList.add('visible');
+  revealed.add(n);
+  updateProgress();
+  if (window.MathJax) MathJax.typesetPromise([content]);
+  if (n === 5) buildSumDistChart();
+}
+
+function toggleStep(n) {
+  const content = document.getElementById('content-' + n);
+  if (!content.classList.contains('visible')) revealStep(n);
+}
+
+function revealAll() {
+  for (let i = 1; i <= totalSteps; i++) revealStep(i);
+}
+
+function resetAll() {
+  revealed.clear();
+  for (let i = 1; i <= totalSteps; i++) {
+    document.getElementById('step-' + i).classList.remove('revealed');
+    document.getElementById('content-' + i).classList.remove('visible');
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const pct = (revealed.size / totalSteps) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = revealed.size + ' / ' + totalSteps + ' pasos';
+}
+
+// ===== COMBINATIONS TABLE =====
+const combos = [];
+for (let a = 1; a <= 6; a++)
+  for (let b = 1; b <= 6; b++)
+    for (let c = 1; c <= 6; c++)
+      if (a + b + c === 7) combos.push([a, b, c]);
+
+const tbody7 = document.getElementById('combos-tbody');
+combos.forEach((t, i) => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td>${i+1}</td><td>${t[0]}</td><td>${t[1]}</td><td>${t[2]}</td><td><strong>${t[0]+t[1]+t[2]}</strong></td>`;
+  tbody7.appendChild(tr);
+});
+
+// ===== SUM DISTRIBUTION CHART =====
+function buildSumDistChart() {
+  const counts = {};
+  for (let a=1; a<=6; a++)
+    for (let b=1; b<=6; b++)
+      for (let c=1; c<=6; c++) {
+        const s = a+b+c;
+        counts[s] = (counts[s]||0)+1;
+      }
+
+  const container = document.getElementById('sum-dist-chart');
+  container.innerHTML = '';
+  const maxCount = Math.max(...Object.values(counts));
+
+  for (let s = 3; s <= 18; s++) {
+    const col = document.createElement('div');
+    col.style.cssText = 'flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:2px;';
+
+    const h = Math.round(((counts[s]||0) / maxCount) * 90);
+    const bar = document.createElement('div');
+    bar.style.cssText = `width:100%;height:${h}px;border-radius:4px 4px 0 0;
+      background:${s===7?'#f0883e':'#1a3a5c'};
+      opacity:${s===7?'1':'0.55'};
+      transition:height 0.4s;`;
+    bar.title = `Suma ${s}: ${counts[s]} casos`;
+
+    col.appendChild(bar);
+    container.appendChild(col);
+  }
+}
+
+// ===== SIMULATOR =====
+let sim3Total = 0, sim3Triple6 = 0, sim3Sum7 = 0;
+const dieEls = ['die-a','die-b','die-c'];
+
+function roll3() {
+  return [
+    Math.ceil(Math.random()*6),
+    Math.ceil(Math.random()*6),
+    Math.ceil(Math.random()*6)
+  ];
+}
+
+function rollOnce3() {
+  const [a, b, c] = roll3();
+  dieEls.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('rolling');
+    void el.offsetWidth;
+    el.textContent = [a,b,c][i];
+    el.classList.add('rolling');
+    setTimeout(() => el.classList.remove('rolling'), 500);
+  });
+
+  const isTriple6 = a===6 && b===6 && c===6;
+  const isSum7 = a+b+c === 7;
+
+  sim3Total++;
+  if (isTriple6) sim3Triple6++;
+  if (isSum7) sim3Sum7++;
+
+  const msg = isTriple6 ? '🏆 ¡Triple 6!' : isSum7 ? '⭐ ¡Suma 7!' : `Suma: ${a+b+c}`;
+  document.getElementById('roll-result').textContent = msg;
+  updateSim3Stats();
+}
+
+function rollN3() {
+  const n = parseInt(document.getElementById('n-slider3').value);
+  let lastA, lastB, lastC;
+  for (let i = 0; i < n; i++) {
+    const [a, b, c] = roll3();
+    lastA = a; lastB = b; lastC = c;
+    sim3Total++;
+    if (a===6 && b===6 && c===6) sim3Triple6++;
+    if (a+b+c===7) sim3Sum7++;
+  }
+  dieEls.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.textContent = [lastA,lastB,lastC][i];
+    el.classList.remove('rolling');
+    void el.offsetWidth;
+    el.classList.add('rolling');
+    setTimeout(() => el.classList.remove('rolling'), 500);
+  });
+  document.getElementById('roll-result').textContent = `Últimos dados: ${lastA}, ${lastB}, ${lastC} → Suma: ${lastA+lastB+lastC}`;
+  updateSim3Stats();
+}
+
+function resetSim3() {
+  sim3Total = sim3Triple6 = sim3Sum7 = 0;
+  dieEls.forEach(id => { document.getElementById(id).textContent = '🎲'; });
+  document.getElementById('roll-result').textContent = '';
+  updateSim3Stats();
+}
+
+function updateSim3Stats() {
+  document.getElementById('s3-total').textContent = sim3Total;
+  document.getElementById('s3-triple6').textContent = sim3Triple6;
+  document.getElementById('s3-sum7').textContent = sim3Sum7;
+
+  if (sim3Total > 0) {
+    const t6pct = ((sim3Triple6/sim3Total)*100).toFixed(2);
+    const s7pct = ((sim3Sum7/sim3Total)*100).toFixed(2);
+    document.getElementById('s3-t6-pct').textContent = `${t6pct}% (teórico: 0.46%)`;
+    document.getElementById('s3-s7-pct').textContent = `${s7pct}% (teórico: 6.94%)`;
+  } else {
+    document.getElementById('s3-t6-pct').textContent = '—';
+    document.getElementById('s3-s7-pct').textContent = '—';
+  }
+}
+
+// Sync slider labels
+document.getElementById('n-slider3').addEventListener('input', function() {
+  document.getElementById('roll-n-label3').textContent = this.value;
+  document.getElementById('roll-n-label3-2').textContent = this.value;
+});
+</script>
+
+</body>
+</html>
