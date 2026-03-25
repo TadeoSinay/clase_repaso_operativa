@@ -39,38 +39,54 @@
      ==================================================== -->
 <header class="main-header">
   <div class="header-logo">
-    <!-- UTN FRBA Logo SVG -->
-    <svg class="utn-logo" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg"
-         aria-label="UTN FRBA">
-      <!-- Gear / Shield icon -->
-      <g transform="translate(2,4)">
-        <!-- Shield base -->
-        <path d="M21 0 L38 5 L38 24 Q38 36 21 42 Q4 36 4 24 L4 5 Z"
-              fill="#003087" stroke="#00d4ff" stroke-width="1.2"/>
-        <!-- Gear teeth (simplified outer ring) -->
-        <circle cx="21" cy="21" r="10" fill="none" stroke="#00d4ff" stroke-width="1.5" stroke-opacity="0.6"/>
-        <circle cx="21" cy="21" r="5"  fill="#00d4ff" fill-opacity="0.15"/>
-        <!-- UTN text inside shield -->
-        <text x="21" y="25" text-anchor="middle" fill="#ffffff"
-              font-family="Space Grotesk,sans-serif" font-size="9" font-weight="700"
-              letter-spacing="1">UTN</text>
-        <!-- Gear teeth marks -->
-        <line x1="21" y1="9"  x2="21" y2="6"  stroke="#00d4ff" stroke-width="2" stroke-opacity="0.7"/>
-        <line x1="21" y1="33" x2="21" y2="36" stroke="#00d4ff" stroke-width="2" stroke-opacity="0.7"/>
-        <line x1="9"  y1="21" x2="6"  y2="21" stroke="#00d4ff" stroke-width="2" stroke-opacity="0.7"/>
-        <line x1="33" y1="21" x2="36" y2="21" stroke="#00d4ff" stroke-width="2" stroke-opacity="0.7"/>
+    <!-- UTN Logo — símbolo oficial + tipografía -->
+    <svg class="utn-logo" viewBox="0 0 260 52" fill="none" xmlns="http://www.w3.org/2000/svg"
+         aria-label="UTN — Universidad Tecnológica Nacional">
+
+      <!-- ── Símbolo UTN (asterisco institucional) ── -->
+      <g transform="translate(2, 2)">
+        <!-- Eje vertical -->
+        <rect x="21.5" y="2"  width="5"  height="44" rx="1.5" fill="white"/>
+        <!-- Eje horizontal -->
+        <rect x="2"   y="21.5" width="44" height="5"  rx="1.5" fill="white"/>
+        <!-- Diagonal ↗↙ -->
+        <rect x="24"  y="-8" width="5" height="64" rx="1.5" fill="white"
+              transform="rotate(45 24 24)"/>
+        <!-- Diagonal ↘↖ -->
+        <rect x="24"  y="-8" width="5" height="64" rx="1.5" fill="white"
+              transform="rotate(-45 24 24)"/>
+        <!-- Arco izquierdo (C hacia derecha) -->
+        <path d="M10 8 Q-4 24 10 40" stroke="white" stroke-width="5"
+              stroke-linecap="round" fill="none"/>
+        <!-- Arco derecho (C hacia izquierda) -->
+        <path d="M38 8 Q52 24 38 40" stroke="white" stroke-width="5"
+              stroke-linecap="round" fill="none"/>
       </g>
-      <!-- UTN text -->
-      <text x="52" y="26" font-family="Space Grotesk,sans-serif" font-size="22"
-            font-weight="700" fill="#00d4ff" letter-spacing="1">UTN</text>
-      <!-- FRBA text -->
-      <text x="52" y="40" font-family="Space Grotesk,sans-serif" font-size="10"
-            font-weight="500" fill="rgba(240,244,255,0.55)" letter-spacing="2">FRBA</text>
-      <!-- Full name -->
-      <text x="105" y="40" font-family="Inter,sans-serif" font-size="8"
-            fill="rgba(240,244,255,0.30)" letter-spacing="0.5">FACULTAD REGIONAL BUENOS AIRES</text>
-      <!-- Separator line -->
-      <line x1="100" y1="14" x2="100" y2="38" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+
+      <!-- ── Separador ── -->
+      <line x1="62" y1="8" x2="62" y2="44"
+            stroke="rgba(255,255,255,0.20)" stroke-width="1"/>
+
+      <!-- ── Logotipo texto ── -->
+      <!-- UTN grande -->
+      <text x="72" y="33"
+            font-family="Arial Black, Arial, sans-serif"
+            font-size="28" font-weight="900"
+            fill="white" letter-spacing="2">UTN</text>
+
+      <!-- Separador fino vertical entre UTN y nombre -->
+      <line x1="134" y1="10" x2="134" y2="44"
+            stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+
+      <!-- FRBA + nombre completo -->
+      <text x="142" y="24"
+            font-family="Arial, sans-serif"
+            font-size="11" font-weight="700"
+            fill="rgba(255,255,255,0.90)" letter-spacing="3">FRBA</text>
+      <text x="142" y="39"
+            font-family="Arial, sans-serif"
+            font-size="7.5" font-weight="400"
+            fill="rgba(255,255,255,0.45)" letter-spacing="0.8">UNIVERSIDAD TECNOLÓGICA NACIONAL</text>
     </svg>
   </div>
 
@@ -341,24 +357,20 @@
     </div>
   </div>
 
-  <!-- Manim video section -->
-  <div class="manim-container animate-in">
-    <div class="manim-placeholder" id="manim-placeholder">
-      <div class="manim-icon">🎬</div>
-      <div class="manim-title">Animación Manim — Resolución Paso a Paso</div>
-      <div class="manim-subtitle">
-        Generá el video con el script Python incluido en el repositorio.
-        Visualiza la fórmula, la construcción de la distribución y el cálculo de cada respuesta.
-      </div>
-      <div class="manim-cmd">manim -pqh manim/ejercicio1_poisson.py PoissonExercise</div>
-      <div style="font-size:0.75rem; color:rgba(240,244,255,0.3); margin-top:0.5rem;">
-        pip install manim &nbsp;·&nbsp; requiere Python 3.8+
-      </div>
+  <!-- Manim-style canvas animation (runs in browser) -->
+  <div class="manim-container animate-in" style="position:relative;">
+    <div style="padding:0.6rem 1.2rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid rgba(255,255,255,0.07);">
+      <span style="font-family:var(--font-mono);font-size:0.72rem;color:var(--neon-cyan);letter-spacing:0.1em;">
+        ▶ ANIMACIÓN — Distribución de Poisson (λ = 3)
+      </span>
+      <button id="manim-replay-btn" onclick="startManimAnimation()" style="
+        padding:0.3rem 0.85rem; border-radius:999px; background:rgba(0,255,204,0.1);
+        border:1px solid rgba(0,255,204,0.35); color:var(--neon-cyan);
+        font-family:var(--font-mono); font-size:0.72rem; cursor:pointer; transition:all 0.2s;">
+        ↺ Repetir
+      </button>
     </div>
-    <!-- Si existe el video renderizado, descomentar: -->
-    <!-- <video class="manim-video" controls>
-      <source src="assets/ejercicio1_poisson.mp4" type="video/mp4">
-    </video> -->
+    <canvas id="manim-canvas" style="width:100%; display:block; background:#060810;"></canvas>
   </div>
 
   <!-- Interactive Calculator -->
@@ -625,6 +637,7 @@
 <script src="js/ejercicio2.js"></script>
 <script src="js/ejercicio3.js"></script>
 <script src="js/main.js"></script>
+<script src="js/manim-canvas.js"></script>
 
 <script>
   // Keep chart lambda label in sync

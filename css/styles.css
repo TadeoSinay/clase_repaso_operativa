@@ -79,7 +79,7 @@ ul { list-style: none; }
   gap: 0.75rem;
   flex-shrink: 0;
 }
-.utn-logo { height: 42px; width: auto; }
+.utn-logo { height: 46px; width: auto; max-width: 290px; }
 
 .header-nav {
   display: flex;
