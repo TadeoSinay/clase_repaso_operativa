@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ejercicio 1 – Probabilidad de Eventos Compuestos</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js" async></script>
+</head>
+<body>
+
+<nav class="navbar">
+  <a class="navbar-brand" href="index.html">📊 IO · <span>Probabilidad</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Inicio</a></li>
+    <li><a href="ejercicio1.html" class="active">Ejercicio 1</a></li>
+    <li><a href="ejercicio2.html">Ejercicio 2</a></li>
+    <li><a href="ejercicio3.html">Ejercicio 3</a></li>
+  </ul>
+</nav>
+
+<div class="ex-page">
+
+  <!-- HEADER -->
+  <div class="ex-page-header">
+    <div class="ex-big-number">1</div>
+    <div>
+      <h1>Probabilidad de Eventos Compuestos</h1>
+      <p>Unión, intersección, complemento e independencia de eventos</p>
+    </div>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Progreso del ejercicio</span>
+      <span id="prog-label">0 / 5 pasos</span>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+  </div>
+
+  <!-- PROBLEM STATEMENT -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📋</span> Enunciado</div>
+    <div class="card-body">
+      <div class="problem-box">
+        Sean <strong>A</strong> y <strong>B</strong> dos eventos de un mismo espacio muestral. Se sabe que:
+      </div>
+      <div class="given-list">
+        <div class="given-item">\(P(A) = \dfrac{3}{8}\)</div>
+        <div class="given-item">\(P(B) = \dfrac{1}{2}\)</div>
+        <div class="given-item">\(P(A \cap B) = \dfrac{5}{16}\)</div>
+      </div>
+      <p style="margin-top:1.2rem; color:#6b7a8d; font-size:0.95rem;">
+        Calcular: (a) \(P(A \cup B)\) &nbsp;·&nbsp; (b) \(P(\bar{A})\) &nbsp;·&nbsp; (c) \(P(\bar{B})\) &nbsp;·&nbsp;
+        (d) \(P(A \cap B)\) si A y B fueran independientes &nbsp;·&nbsp; (e) \(P(\bar{A} \cap \bar{B})\)
+      </p>
+    </div>
+  </div>
+
+  <!-- VENN DIAGRAM -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🔵</span> Diagrama de Venn Interactivo</div>
+    <div class="card-body">
+      <div class="venn-wrap">
+        <svg class="venn-svg" viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg">
+          <!-- Universe -->
+          <rect x="10" y="10" width="380" height="200" rx="12" fill="#f4f7fb" stroke="#cbd5e1" stroke-width="2"/>
+          <text x="370" y="28" text-anchor="end" font-size="13" fill="#94a3b8" font-weight="600">Ω</text>
+
+          <!-- A only region (hover) -->
+          <clipPath id="clipA"><circle cx="155" cy="110" r="85"/></clipPath>
+          <clipPath id="clipB"><circle cx="245" cy="110" r="85"/></clipPath>
+
+          <!-- Circle A -->
+          <circle cx="155" cy="110" r="85" fill="rgba(26,58,92,0.18)" stroke="#1a3a5c" stroke-width="2.5"
+            id="circleA" style="cursor:pointer;"
+            onmouseenter="showVennHint('A')" onmouseleave="showVennHint('')"/>
+
+          <!-- Circle B -->
+          <circle cx="245" cy="110" r="85" fill="rgba(240,136,62,0.18)" stroke="#f0883e" stroke-width="2.5"
+            id="circleB" style="cursor:pointer;"
+            onmouseenter="showVennHint('B')" onmouseleave="showVennHint('')"/>
+
+          <!-- Intersection highlight -->
+          <clipPath id="clipIntersect">
+            <circle cx="155" cy="110" r="85"/>
+          </clipPath>
+          <circle cx="245" cy="110" r="85" fill="rgba(100,160,80,0.35)" clip-path="url(#clipIntersect)"
+            id="intersectZone" style="cursor:pointer;"
+            onmouseenter="showVennHint('AB')" onmouseleave="showVennHint('')"/>
+
+          <!-- Labels -->
+          <text x="118" y="115" text-anchor="middle" font-size="22" font-weight="900" fill="#1a3a5c">A</text>
+          <text x="282" y="115" text-anchor="middle" font-size="22" font-weight="900" fill="#c0551a">B</text>
+          <text x="200" y="105" text-anchor="middle" font-size="12" font-weight="700" fill="#1a6632">A∩B</text>
+
+          <!-- Probability annotations (shown on hover) -->
+          <text x="105" y="175" text-anchor="middle" font-size="11" fill="#1a3a5c" id="annA" opacity="0">P(A solo) = 1/16</text>
+          <text x="295" y="175" text-anchor="middle" font-size="11" fill="#c0551a" id="annB" opacity="0">P(B solo) = 3/16</text>
+          <text x="200" y="130" text-anchor="middle" font-size="11" fill="#1a6632" id="annAB" opacity="0">P(A∩B) = 5/16</text>
+        </svg>
+
+        <div class="venn-legend">
+          <span><span class="legend-dot" style="background:rgba(26,58,92,0.4)"></span> Evento A</span>
+          <span><span class="legend-dot" style="background:rgba(240,136,62,0.5)"></span> Evento B</span>
+          <span><span class="legend-dot" style="background:rgba(100,160,80,0.5)"></span> A ∩ B</span>
+        </div>
+        <div class="venn-tooltip" id="venn-tooltip">
+          ☝️ Pasá el cursor sobre las regiones del diagrama para ver las probabilidades
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP BY STEP SOLUTION -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📝</span> Resolución Paso a Paso</div>
+    <div class="card-body">
+      <div style="display:flex; gap:1rem; margin-bottom:1.5rem; flex-wrap:wrap;">
+        <button class="reveal-all-btn" onclick="revealAll()">Revelar todos los pasos</button>
+        <button class="reveal-all-btn" style="background:#dc3545;" onclick="resetAll()">Reiniciar</button>
+      </div>
+
+      <div class="steps-container">
+
+        <!-- STEP 1 -->
+        <div class="step" id="step-1">
+          <div class="step-header" onclick="toggleStep(1)">
+            <div class="step-num">1</div>
+            <span class="step-title">Calcular P(A ∪ B) — Regla de la Adición</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(1)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-1">
+            <p>Usamos la <strong>Regla de la Adición</strong> (fórmula de inclusión-exclusión):</p>
+            <div class="formula-box">
+              \[ P(A \cup B) = P(A) + P(B) - P(A \cap B) \]
+            </div>
+            <p>Sustituyendo los valores dados:</p>
+            <div class="formula-box">
+              \[ P(A \cup B) = \frac{3}{8} + \frac{1}{2} - \frac{5}{16} = \frac{6}{16} + \frac{8}{16} - \frac{5}{16} \]
+            </div>
+            <div class="result-highlight">\( P(A \cup B) = \dfrac{9}{16} = 0{,}5625 \)</div>
+            <p style="margin-top:0.75rem; color:#6b7a8d; font-size:0.9rem;">
+              💡 <em>La regla resta P(A∩B) porque al sumar P(A) y P(B), la intersección se conta dos veces.</em>
+            </p>
+          </div>
+        </div>
+
+        <!-- STEP 2 -->
+        <div class="step" id="step-2">
+          <div class="step-header" onclick="toggleStep(2)">
+            <div class="step-num">2</div>
+            <span class="step-title">Calcular P(Ā) — Complemento de A</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(2)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-2">
+            <p>Por el <strong>Axioma de la Complementariedad</strong>:</p>
+            <div class="formula-box">
+              \[ P(\bar{A}) = 1 - P(A) \]
+            </div>
+            <div class="formula-box">
+              \[ P(\bar{A}) = 1 - \frac{3}{8} = \frac{5}{8} \]
+            </div>
+            <div class="result-highlight">\( P(\bar{A}) = \dfrac{5}{8} = 0{,}625 \)</div>
+            <p style="margin-top:0.75rem; color:#6b7a8d; font-size:0.9rem;">
+              💡 <em>El complemento representa "que NO ocurra A". La suma P(A) + P(Ā) siempre es 1.</em>
+            </p>
+          </div>
+        </div>
+
+        <!-- STEP 3 -->
+        <div class="step" id="step-3">
+          <div class="step-header" onclick="toggleStep(3)">
+            <div class="step-num">3</div>
+            <span class="step-title">Calcular P(B̄) — Complemento de B</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(3)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-3">
+            <p>Aplicando el mismo axioma:</p>
+            <div class="formula-box">
+              \[ P(\bar{B}) = 1 - P(B) = 1 - \frac{1}{2} \]
+            </div>
+            <div class="result-highlight">\( P(\bar{B}) = \dfrac{1}{2} = 0{,}5 \)</div>
+          </div>
+        </div>
+
+        <!-- STEP 4 -->
+        <div class="step" id="step-4">
+          <div class="step-header" onclick="toggleStep(4)">
+            <div class="step-num">4</div>
+            <span class="step-title">P(A ∩ B) si A y B fueran independientes</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(4)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-4">
+            <p>Si A y B son <strong>eventos independientes</strong>, entonces:</p>
+            <div class="formula-box">
+              \[ P(A \cap B) = P(A) \cdot P(B) \]
+            </div>
+            <div class="formula-box">
+              \[ P(A \cap B) = \frac{3}{8} \times \frac{1}{2} = \frac{3}{16} \]
+            </div>
+            <div class="result-highlight">\( P(A \cap B)_{\text{ind}} = \dfrac{3}{16} = 0{,}1875 \)</div>
+            <p style="margin-top:0.75rem; color:#6b7a8d; font-size:0.9rem;">
+              ⚠️ <em>Nota: el dato del enunciado dice P(A∩B) = 5/16, que es distinto de 3/16. Por lo tanto A y B <strong>NO son independientes</strong> en este ejercicio.</em>
+            </p>
+          </div>
+        </div>
+
+        <!-- STEP 5 -->
+        <div class="step" id="step-5">
+          <div class="step-header" onclick="toggleStep(5)">
+            <div class="step-num">5</div>
+            <span class="step-title">Calcular P(Ā ∩ B̄) — Ley de De Morgan</span>
+            <button class="step-btn" onclick="event.stopPropagation(); revealStep(5)">Revelar</button>
+          </div>
+          <div class="step-content" id="content-5">
+            <p>Usamos la <strong>Ley de De Morgan</strong>:</p>
+            <div class="formula-box">
+              \[ P(\bar{A} \cap \bar{B}) = P(\overline{A \cup B}) = 1 - P(A \cup B) \]
+            </div>
+            <p>Ya calculamos P(A∪B) = 9/16 en el Paso 1:</p>
+            <div class="formula-box">
+              \[ P(\bar{A} \cap \bar{B}) = 1 - \frac{9}{16} = \frac{7}{16} \]
+            </div>
+            <div class="result-highlight">\( P(\bar{A} \cap \bar{B}) = \dfrac{7}{16} = 0{,}4375 \)</div>
+            <p style="margin-top:0.75rem; color:#6b7a8d; font-size:0.9rem;">
+              💡 <em>P(Ā∩B̄) es la probabilidad de que ni A ni B ocurran. Es la región del espacio muestral fuera de ambos círculos en el diagrama de Venn.</em>
+            </p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RESUMEN DE RESULTADOS -->
+  <div class="card">
+    <div class="card-header"><span class="icon">✅</span> Resumen de Resultados</div>
+    <div class="card-body">
+      <div class="calc-results">
+        <div class="calc-result-item">
+          <div class="label">\(P(A \cup B)\)</div>
+          <div class="value">9/16 = 0.5625</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">\(P(\bar{A})\)</div>
+          <div class="value">5/8 = 0.625</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">\(P(\bar{B})\)</div>
+          <div class="value">1/2 = 0.5</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">\(P(A \cap B)\) si independientes</div>
+          <div class="value">3/16 = 0.1875</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">\(P(\bar{A} \cap \bar{B})\)</div>
+          <div class="value">7/16 = 0.4375</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CALCULADORA INTERACTIVA -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🔢</span> Calculadora Interactiva</div>
+    <div class="card-body">
+      <p style="color:#6b7a8d; margin-bottom:1.2rem; font-size:0.93rem;">
+        Probá con tus propios valores de P(A), P(B) y P(A∩B) para calcular automáticamente todos los resultados.
+      </p>
+      <div class="calc-grid">
+        <div class="calc-field">
+          <label>P(A)</label>
+          <input type="number" id="cPA" min="0" max="1" step="0.001" value="0.375" oninput="calcAll()">
+        </div>
+        <div class="calc-field">
+          <label>P(B)</label>
+          <input type="number" id="cPB" min="0" max="1" step="0.001" value="0.5" oninput="calcAll()">
+        </div>
+        <div class="calc-field">
+          <label>P(A∩B)</label>
+          <input type="number" id="cPAB" min="0" max="1" step="0.001" value="0.3125" oninput="calcAll()">
+        </div>
+      </div>
+      <button class="calc-btn" onclick="calcAll()">Calcular</button>
+      <div class="calc-results" id="calc-results">
+        <div class="calc-result-item">
+          <div class="label">P(A ∪ B)</div>
+          <div class="value" id="r-union">–</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">P(Ā)</div>
+          <div class="value" id="r-compA">–</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">P(B̄)</div>
+          <div class="value" id="r-compB">–</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">P(A∩B) independientes</div>
+          <div class="value" id="r-ind">–</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">P(Ā∩B̄)</div>
+          <div class="value" id="r-compAB">–</div>
+        </div>
+        <div class="calc-result-item">
+          <div class="label">¿Son independientes?</div>
+          <div class="value" id="r-check">–</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- THEORY REFERENCE -->
+  <div class="card">
+    <div class="card-header"><span class="icon">📚</span> Conceptos Clave</div>
+    <div class="card-body">
+      <ul class="ref-list">
+        <li>
+          <span style="font-size:1.4rem">➕</span>
+          <div>
+            <a href="#">Regla de la Adición</a>
+            <span> — P(A∪B) = P(A) + P(B) − P(A∩B)</span>
+          </div>
+        </li>
+        <li>
+          <span style="font-size:1.4rem">🔄</span>
+          <div>
+            <a href="#">Complemento</a>
+            <span> — P(Ā) = 1 − P(A)</span>
+          </div>
+        </li>
+        <li>
+          <span style="font-size:1.4rem">⊗</span>
+          <div>
+            <a href="#">Independencia</a>
+            <span> — A y B son independientes si P(A∩B) = P(A)·P(B)</span>
+          </div>
+        </li>
+        <li>
+          <span style="font-size:1.4rem">⚖️</span>
+          <div>
+            <a href="#">Leyes de De Morgan</a>
+            <span> — P(Ā∩B̄) = 1 − P(A∪B)</span>
+          </div>
+        </li>
+        <li>
+          <span style="font-size:1.4rem">📄</span>
+          <div>
+            <a href="TEO_probabilidad.pdf" target="_blank">Apunte Teórico — TEO_probabilidad.pdf</a>
+            <span> — Ver secciones de axiomas y eventos compuestos</span>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- VIDEOS -->
+  <div class="card">
+    <div class="card-header"><span class="icon">🎥</span> Videos Didácticos</div>
+    <div class="card-body">
+      <div class="videos-grid">
+        <div class="video-item">
+          <h4>Probabilidad de la unión de eventos — Khan Academy</h4>
+          <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/QE2uR6Z-NcU"
+              title="Probability of union of events" allowfullscreen loading="lazy"></iframe>
+          </div>
+        </div>
+        <div class="video-item">
+          <h4>Diagramas de Venn y probabilidad</h4>
+          <div class="video-wrap">
+            <iframe src="https://www.youtube.com/embed/obZzOq_wSCg"
+              title="Venn diagrams probability" allowfullscreen loading="lazy"></iframe>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- NAV -->
+  <div class="ex-nav">
+    <a href="index.html">← Inicio</a>
+    <a href="ejercicio2.html">Ejercicio 2 →</a>
+  </div>
+
+</div>
+
+<footer>
+  Investigación Operativa · Repaso de Probabilidad · <strong>Ejercicio 1</strong>
+</footer>
+
+<script>
+// ===== STEPS =====
+const totalSteps = 5;
+let revealed = new Set();
+
+function revealStep(n) {
+  const step = document.getElementById('step-' + n);
+  const content = document.getElementById('content-' + n);
+  step.classList.add('revealed');
+  content.classList.add('visible');
+  revealed.add(n);
+  updateProgress();
+  if (window.MathJax) MathJax.typesetPromise([content]);
+}
+
+function toggleStep(n) {
+  const content = document.getElementById('content-' + n);
+  if (!content.classList.contains('visible')) {
+    revealStep(n);
+  }
+}
+
+function revealAll() {
+  for (let i = 1; i <= totalSteps; i++) revealStep(i);
+}
+
+function resetAll() {
+  revealed.clear();
+  for (let i = 1; i <= totalSteps; i++) {
+    document.getElementById('step-' + i).classList.remove('revealed');
+    document.getElementById('content-' + i).classList.remove('visible');
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  const pct = (revealed.size / totalSteps) * 100;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('prog-label').textContent = revealed.size + ' / ' + totalSteps + ' pasos';
+}
+
+// ===== VENN =====
+const vennMessages = {
+  '': '☝️ Pasá el cursor sobre las regiones del diagrama para ver las probabilidades',
+  'A': '🔵 Región A: P(A) = 3/8 = 0.375 — Toda la región del evento A (incluye A∩B)',
+  'B': '🟠 Región B: P(B) = 1/2 = 0.5 — Toda la región del evento B (incluye A∩B)',
+  'AB': '🟢 Intersección A∩B: P(A∩B) = 5/16 = 0.3125 — Ambos eventos ocurren simultáneamente'
+};
+
+function showVennHint(zone) {
+  document.getElementById('venn-tooltip').textContent = vennMessages[zone];
+}
+
+// ===== CALCULATOR =====
+function calcAll() {
+  const PA  = parseFloat(document.getElementById('cPA').value) || 0;
+  const PB  = parseFloat(document.getElementById('cPB').value) || 0;
+  const PAB = parseFloat(document.getElementById('cPAB').value) || 0;
+
+  const union   = PA + PB - PAB;
+  const compA   = 1 - PA;
+  const compB   = 1 - PB;
+  const ind     = PA * PB;
+  const compAB  = 1 - union;
+  const areInd  = Math.abs(PAB - ind) < 0.001;
+
+  const fmt = v => (Math.round(v * 10000) / 10000).toString();
+
+  document.getElementById('r-union').textContent  = fmt(Math.max(0, Math.min(1, union)));
+  document.getElementById('r-compA').textContent  = fmt(compA);
+  document.getElementById('r-compB').textContent  = fmt(compB);
+  document.getElementById('r-ind').textContent    = fmt(ind);
+  document.getElementById('r-compAB').textContent = fmt(Math.max(0, compAB));
+  document.getElementById('r-check').textContent  = areInd ? '✅ Sí' : '❌ No';
+}
+
+calcAll();
+</script>
+
+</body>
+</html>
