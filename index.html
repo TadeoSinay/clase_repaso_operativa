@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Repaso Operativa · UTN FRBA</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Fira+Code:wght@300;400;500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Confetti -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <!-- MathJax -->
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+      options: { skipHtmlTags: ['script','noscript','style','textarea','pre'] }
+    };
+  </script>
+  <script id="MathJax-script" async
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+
+<!-- ====================================================
+     PARTICLES CANVAS (background)
+     ==================================================== -->
+<canvas id="particles-canvas"></canvas>
+
+<!-- ====================================================
+     HEADER
+     ==================================================== -->
+<header class="main-header">
+  <div class="header-logo">
+    <!-- UTN FRBA Logo SVG -->
+    <svg class="utn-logo" viewBox="0 0 220 50" fill="none" xmlns="http://www.w3.org/2000/svg"
+         aria-label="UTN FRBA">
+      <!-- Gear / Shield icon -->
+      <g transform="translate(2,4)">
+        <!-- Shield base -->
+        <path d="M21 0 L38 5 L38 24 Q38 36 21 42 Q4 36 4 24 L4 5 Z"
+              fill="#003087" stroke="#00d4ff" stroke-width="1.2"/>
+        <!-- Gear teeth (simplified outer ring) -->
+        <circle cx="21" cy="21" r="10" fill="none" stroke="#00d4ff" stroke-width="1.5" stroke-opacity="0.6"/>
+        <circle cx="21" cy="21" r="5"  fill="#00d4ff" fill-opacity="0.15"/>
+        <!-- UTN text inside shield -->
+        <text x="21" y="25" text-anchor="middle" fill="#ffffff"
+              font-family="Space Grotesk,sans-serif" font-size="9" font-weight="700"
+              letter-spacing="1">UTN</text>
+        <!-- Gear teeth marks -->
+        <line x1="21" y1="9"  x2="21" y2="6"  stroke="#00d4ff" stroke-width="2" stroke-opacity="0.7"/>
+        <line x1="21" y1="33" x2="21" y2="36" stroke="#00d4ff" stroke-width="2" stroke-opacity="0.7"/>
+        <line x1="9"  y1="21" x2="6"  y2="21" stroke="#00d4ff" stroke-width="2" stroke-opacity="0.7"/>
+        <line x1="33" y1="21" x2="36" y2="21" stroke="#00d4ff" stroke-width="2" stroke-opacity="0.7"/>
+      </g>
+      <!-- UTN text -->
+      <text x="52" y="26" font-family="Space Grotesk,sans-serif" font-size="22"
+            font-weight="700" fill="#00d4ff" letter-spacing="1">UTN</text>
+      <!-- FRBA text -->
+      <text x="52" y="40" font-family="Space Grotesk,sans-serif" font-size="10"
+            font-weight="500" fill="rgba(240,244,255,0.55)" letter-spacing="2">FRBA</text>
+      <!-- Full name -->
+      <text x="105" y="40" font-family="Inter,sans-serif" font-size="8"
+            fill="rgba(240,244,255,0.30)" letter-spacing="0.5">FACULTAD REGIONAL BUENOS AIRES</text>
+      <!-- Separator line -->
+      <line x1="100" y1="14" x2="100" y2="38" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+    </svg>
+  </div>
+
+  <nav class="header-nav">
+    <a href="#ejercicio1" class="nav-link">01 · Poisson</a>
+    <a href="#ejercicio2" class="nav-link">02 · Conversión</a>
+    <a href="#ejercicio3" class="nav-link">03 · Markov</a>
+  </nav>
+
+  <div class="header-badge">
+    <span class="badge-dot"></span>
+    Repaso Operativa
+  </div>
+</header>
+
+
+<!-- ====================================================
+     HERO SECTION
+     ==================================================== -->
+<section class="hero-section" id="hero">
+  <div class="hero-content">
+    <div class="hero-tag">REPASO OPERATIVA · UTN FRBA · 2026</div>
+    <h1 class="hero-title">
+      Probabilidad &amp;<br>
+      <span class="gradient-text">Procesos Estocásticos</span>
+    </h1>
+    <p class="hero-subtitle">
+      Tres ejercicios, tres mundos. Explorá distribuciones, funnels de conversión
+      y cadenas de Markov con visualizaciones interactivas en tiempo real.
+    </p>
+    <div class="hero-exercises">
+      <div class="exercise-card animate-in" data-exercise="1">
+        <div class="ex-number">EJERCICIO 01</div>
+        <div class="ex-icon">🤖</div>
+        <div class="ex-title">Robot Seleccionador</div>
+        <div class="ex-sub">Distribución de Poisson</div>
+      </div>
+      <div class="exercise-card animate-in delay-200" data-exercise="2">
+        <div class="ex-number">EJERCICIO 02</div>
+        <div class="ex-icon">📊</div>
+        <div class="ex-title">Funnel de Conversión</div>
+        <div class="ex-sub">Probabilidad Condicional</div>
+      </div>
+      <div class="exercise-card animate-in delay-400" data-exercise="3">
+        <div class="ex-number">EJERCICIO 03</div>
+        <div class="ex-icon">🔄</div>
+        <div class="ex-title">Cadena de Markov</div>
+        <div class="ex-sub">Estado Estacionario</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero robot SVG -->
+  <div class="hero-visual">
+    <svg viewBox="0 0 300 300" fill="none" xmlns="http://www.w3.org/2000/svg"
+         style="width:100%; opacity:0.85;">
+      <defs>
+        <radialGradient id="rg1" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#00d4ff" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#00d4ff" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <!-- Glow bg -->
+      <ellipse cx="150" cy="160" rx="120" ry="100" fill="url(#rg1)"/>
+      <!-- Base platform -->
+      <rect x="40" y="240" width="220" height="14" rx="4"
+            fill="#0d1530" stroke="#00d4ff" stroke-opacity="0.3" stroke-width="1"/>
+      <!-- Robot arm (vertical) -->
+      <rect x="138" y="100" width="24" height="150" rx="8"
+            fill="#0d1530" stroke="#00d4ff" stroke-opacity="0.6" stroke-width="1.5"/>
+      <!-- Joint -->
+      <circle cx="150" cy="105" r="18" fill="#111827" stroke="#7c3aed" stroke-width="2"/>
+      <circle cx="150" cy="105" r="8"  fill="#1e1b4b" stroke="#7c3aed" stroke-width="1.5"/>
+      <!-- Arm horizontal -->
+      <rect x="60"  y="90" width="90" height="18" rx="6"
+            fill="#0d1530" stroke="#00d4ff" stroke-opacity="0.5" stroke-width="1.5"/>
+      <!-- Piston housing -->
+      <rect x="68"  y="108" width="22" height="50" rx="4"
+            fill="#111827" stroke="#ff2d78" stroke-opacity="0.7" stroke-width="1.5"/>
+      <!-- Piston rod (animated via CSS) -->
+      <rect class="piston-rod-hero" x="75" y="155" width="8" height="28" rx="2"
+            fill="#ff2d78" fill-opacity="0.85"/>
+      <!-- Head display -->
+      <rect x="112" y="52" width="76" height="52" rx="10"
+            fill="#0a0f20" stroke="#00d4ff" stroke-opacity="0.8" stroke-width="1.5"/>
+      <!-- Display screen lines (decorative) -->
+      <line x1="122" y1="66" x2="178" y2="66" stroke="#00d4ff" stroke-opacity="0.4" stroke-width="1"/>
+      <line x1="122" y1="74" x2="165" y2="74" stroke="#00ffcc" stroke-opacity="0.4" stroke-width="1"/>
+      <line x1="122" y1="82" x2="172" y2="82" stroke="#7c3aed" stroke-opacity="0.4" stroke-width="1"/>
+      <!-- Eyes -->
+      <circle cx="136" cy="93" r="5" fill="#00d4ff" fill-opacity="0.9"/>
+      <circle cx="164" cy="93" r="5" fill="#00d4ff" fill-opacity="0.9"/>
+      <!-- Conveyor belt hint -->
+      <rect x="40"  y="234" width="220" height="8" rx="3"
+            fill="#1a2035" stroke="#00ffcc" stroke-opacity="0.25" stroke-width="1"/>
+      <!-- Packages on belt -->
+      <rect x="195" y="220" width="28" height="20" rx="3" fill="#1e1b4b"
+            stroke="#7c3aed" stroke-opacity="0.6" stroke-width="1"/>
+      <rect x="100" y="220" width="28" height="20" rx="3" fill="#1e1b4b"
+            stroke="#00d4ff" stroke-opacity="0.5" stroke-width="1"/>
+    </svg>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+
+<!-- ====================================================
+     EJERCICIO 01 — ROBOT SELECCIONADOR — POISSON
+     ==================================================== -->
+<section id="ejercicio1" class="ex-section">
+  <div class="section-label animate-in">
+    <span class="section-label-dot"></span>
+    Ejercicio 01 · Distribución de Poisson
+  </div>
+  <h2 class="section-title animate-in delay-100">
+    Robot Seleccionador<br>
+    <span class="gradient-text">Fallas en el Pistón</span>
+  </h2>
+  <p class="section-desc animate-in delay-200">
+    Las fallas del pistón hidráulico siguen una distribución de Poisson.
+    Explorá la fórmula, calculá probabilidades en tiempo real y analizá la distribución completa.
+  </p>
+
+  <!-- Consigna + Robot -->
+  <div class="ex1-layout animate-in delay-300">
+    <!-- Robot animation -->
+    <div class="glass-card">
+      <div class="robot-container" id="robot-container">
+        <svg class="robot-svg" viewBox="0 0 280 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <filter id="fail-glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+          <!-- Background glow -->
+          <ellipse cx="140" cy="140" rx="100" ry="70" fill="#ff2d78" fill-opacity="0.04"/>
+
+          <!-- Conveyor belt -->
+          <rect x="20" y="185" width="240" height="12" rx="4"
+                fill="#0d1530" stroke="#00ffcc" stroke-opacity="0.25" stroke-width="1"/>
+          <!-- Belt segments -->
+          <g class="conveyor-belt">
+            <rect x="30" y="187" width="20" height="8" rx="2" fill="#1a2540" stroke="#00ffcc"
+                  stroke-opacity="0.2" stroke-width="0.5"/>
+            <rect x="70" y="187" width="20" height="8" rx="2" fill="#1a2540" stroke="#00ffcc"
+                  stroke-opacity="0.2" stroke-width="0.5"/>
+            <rect x="110" y="187" width="20" height="8" rx="2" fill="#1a2540" stroke="#00ffcc"
+                  stroke-opacity="0.2" stroke-width="0.5"/>
+            <rect x="150" y="187" width="20" height="8" rx="2" fill="#1a2540" stroke="#00ffcc"
+                  stroke-opacity="0.2" stroke-width="0.5"/>
+            <rect x="190" y="187" width="20" height="8" rx="2" fill="#1a2540" stroke="#00ffcc"
+                  stroke-opacity="0.2" stroke-width="0.5"/>
+            <rect x="230" y="187" width="20" height="8" rx="2" fill="#1a2540" stroke="#00ffcc"
+                  stroke-opacity="0.2" stroke-width="0.5"/>
+          </g>
+          <!-- Packages on belt -->
+          <rect x="190" y="169" width="28" height="18" rx="3"
+                fill="#1e1b4b" stroke="#7c3aed" stroke-opacity="0.7" stroke-width="1"/>
+          <rect x="80"  y="169" width="28" height="18" rx="3"
+                fill="#1e1b4b" stroke="#00d4ff" stroke-opacity="0.6" stroke-width="1"/>
+
+          <!-- Robot body vertical -->
+          <rect x="126" y="90" width="28" height="100" rx="8"
+                fill="#0a0f20" stroke="#00d4ff" stroke-opacity="0.6" stroke-width="1.5"/>
+          <!-- Body highlight -->
+          <rect x="128" y="92" width="6" height="60" rx="3"
+                fill="#00d4ff" fill-opacity="0.06"/>
+
+          <!-- Horizontal arm -->
+          <rect x="52" y="78" width="88" height="20" rx="7"
+                fill="#0a0f20" stroke="#00d4ff" stroke-opacity="0.5" stroke-width="1.5"/>
+
+          <!-- Piston housing (critical part) -->
+          <rect x="56" y="97" width="26" height="56" rx="5"
+                fill="#100a1a" stroke="#ff2d78" stroke-opacity="0.8" stroke-width="2"/>
+          <text x="69" y="115" text-anchor="middle"
+                font-family="Fira Code" font-size="7" fill="#ff2d78" fill-opacity="0.75">PST</text>
+
+          <!-- Piston rod (animated) -->
+          <rect class="piston-rod" x="63" y="150" width="12" height="30" rx="3"
+                fill="#ff2d78" fill-opacity="0.9"/>
+
+          <!-- Alert ring (shown when failing) -->
+          <circle class="alert-ring" cx="69" cy="170" r="18"
+                  fill="none" stroke="#ff2d78" stroke-width="2" filter="url(#fail-glow)"/>
+
+          <!-- Fail label -->
+          <g class="fail-label" filter="url(#fail-glow)">
+            <rect x="30" y="8" width="80" height="22" rx="5"
+                  fill="#ff2d78" fill-opacity="0.15"
+                  stroke="#ff2d78" stroke-opacity="0.7" stroke-width="1"/>
+            <text x="70" y="23" text-anchor="middle"
+                  font-family="Space Grotesk,sans-serif" font-size="10"
+                  font-weight="700" fill="#ff2d78">⚠ FALLA DETECTADA</text>
+          </g>
+
+          <!-- Shoulder joint -->
+          <circle cx="140" cy="90" r="20"
+                  fill="#111827" stroke="#7c3aed" stroke-width="2"/>
+          <circle cx="140" cy="90" r="9"
+                  fill="#1e1b4b" stroke="#7c3aed" stroke-width="1.5"/>
+
+          <!-- Robot head -->
+          <rect x="104" y="28" width="72" height="58" rx="12"
+                fill="#0a0f20" stroke="#00d4ff" stroke-opacity="0.9" stroke-width="1.5"/>
+
+          <!-- Display lines -->
+          <line x1="116" y1="42" x2="164" y2="42" stroke="#00d4ff" stroke-opacity="0.5" stroke-width="1.2"/>
+          <line x1="116" y1="52" x2="154" y2="52" stroke="#00ffcc" stroke-opacity="0.5" stroke-width="1"/>
+          <line x1="116" y1="62" x2="160" y2="62" stroke="#7c3aed" stroke-opacity="0.5" stroke-width="1"/>
+
+          <!-- Eyes (LED) -->
+          <circle cx="126" cy="74" r="6" fill="#00d4ff" fill-opacity="0.9"/>
+          <circle cx="154" cy="74" r="6" fill="#00d4ff" fill-opacity="0.9"/>
+          <circle cx="126" cy="74" r="2.5" fill="#ffffff"/>
+          <circle cx="154" cy="74" r="2.5" fill="#ffffff"/>
+
+          <!-- Lambda indicator -->
+          <text x="140" y="20" text-anchor="middle"
+                font-family="Fira Code,monospace" font-size="9" fill="#7c3aed" fill-opacity="0.8">
+            λ = 3 / turno
+          </text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Consigna -->
+    <div class="glass-card">
+      <div class="consigna-box">
+        <h3>📋 Enunciado</h3>
+        <p>
+          Un robot seleccionador en una planta automotriz clasifica piezas metálicas
+          mediante un pistón hidráulico. Las fallas del pistón siguen una distribución
+          de Poisson con tasa promedio de
+          <span class="highlight-val">λ = 3 fallas / turno</span>
+          (turno = 8 horas).
+        </p>
+        <p>Se pide calcular:</p>
+        <div class="consigna-parts">
+          <div class="consigna-part">
+            <span class="part-letter">a)</span>
+            <span>La probabilidad de que ocurran <strong>exactamente 2 fallas</strong> en un turno: <span class="highlight-val">P(X = 2)</span></span>
+          </div>
+          <div class="consigna-part">
+            <span class="part-letter">b)</span>
+            <span>La probabilidad de que ocurran <strong>a lo sumo 1 falla</strong>: <span class="highlight-val">P(X ≤ 1)</span></span>
+          </div>
+          <div class="consigna-part">
+            <span class="part-letter">c)</span>
+            <span>La probabilidad de que ocurran <strong>4 o más fallas</strong>: <span class="highlight-val">P(X ≥ 4)</span></span>
+          </div>
+          <div class="consigna-part">
+            <span class="part-letter">d)</span>
+            <span>Si se trabajan <strong>2 turnos consecutivos</strong>, ¿cuál es la probabilidad de que no ocurra <strong>ninguna falla</strong>? <span class="highlight-val">P(X = 0, 2 turnos)</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Formula chip -->
+      <div style="margin-top:1.5rem;">
+        <div class="formula-chip">
+          <span>📐</span>
+          \( P(X = k) = \dfrac{\lambda^k \cdot e^{-\lambda}}{k!} \)
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Manim video section -->
+  <div class="manim-container animate-in">
+    <div class="manim-placeholder" id="manim-placeholder">
+      <div class="manim-icon">🎬</div>
+      <div class="manim-title">Animación Manim — Resolución Paso a Paso</div>
+      <div class="manim-subtitle">
+        Generá el video con el script Python incluido en el repositorio.
+        Visualiza la fórmula, la construcción de la distribución y el cálculo de cada respuesta.
+      </div>
+      <div class="manim-cmd">manim -pqh manim/ejercicio1_poisson.py PoissonExercise</div>
+      <div style="font-size:0.75rem; color:rgba(240,244,255,0.3); margin-top:0.5rem;">
+        pip install manim &nbsp;·&nbsp; requiere Python 3.8+
+      </div>
+    </div>
+    <!-- Si existe el video renderizado, descomentar: -->
+    <!-- <video class="manim-video" controls>
+      <source src="assets/ejercicio1_poisson.mp4" type="video/mp4">
+    </video> -->
+  </div>
+
+  <!-- Interactive Calculator -->
+  <div class="glass-card blue-glow animate-in" style="margin-top: 2rem;">
+    <h3 style="font-family: var(--font-head); font-size: 1.05rem; font-weight: 600; margin-bottom: 1.5rem; color: var(--neon-blue);">
+      🎛️ Calculadora Interactiva — Ajustá λ y explorá la distribución
+    </h3>
+    <div class="calc-layout">
+      <!-- Sliders -->
+      <div class="slider-panel glass-card">
+        <h3>Parámetros</h3>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span>Tasa λ (fallas/turno)</span>
+            <span id="lambda-val">3.0</span>
+          </div>
+          <input type="range" id="lambda-slider"
+                 min="0.5" max="10" step="0.5" value="3">
+        </div>
+
+        <div style="margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border-glass);">
+          <div style="font-size:0.78rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 0.75rem;">
+            RESPUESTAS DEL EJERCICIO (con λ actual)
+          </div>
+          <!-- Answer cards -->
+          <div class="answers-grid" style="grid-template-columns: 1fr 1fr;">
+            <div class="answer-card" id="ans-a">
+              <div class="answer-card-label">a) Exactamente 2</div>
+              <div class="answer-card-expr">P(X = 2)</div>
+              <div class="answer-card-val">—</div>
+              <div class="answer-card-pct"></div>
+            </div>
+            <div class="answer-card" id="ans-b">
+              <div class="answer-card-label">b) A lo sumo 1</div>
+              <div class="answer-card-expr">P(X ≤ 1)</div>
+              <div class="answer-card-val">—</div>
+              <div class="answer-card-pct"></div>
+            </div>
+            <div class="answer-card" id="ans-c">
+              <div class="answer-card-label">c) 4 o más</div>
+              <div class="answer-card-expr">P(X ≥ 4)</div>
+              <div class="answer-card-val">—</div>
+              <div class="answer-card-pct"></div>
+            </div>
+            <div class="answer-card" id="ans-d">
+              <div class="answer-card-label">d) 0 fallas, 2 turnos</div>
+              <div class="answer-card-expr">P(X=0, 2T)</div>
+              <div class="answer-card-val">—</div>
+              <div class="answer-card-pct"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-area">
+        <div class="chart-canvas-wrap">
+          <div class="chart-title">
+            Distribución de Probabilidad P(X = k) para λ = <span id="chart-lambda-label">3.0</span>
+          </div>
+          <canvas id="poisson-chart" height="200"></canvas>
+        </div>
+
+        <!-- Probability Table -->
+        <div class="prob-table-wrap" style="margin-top: 1.25rem;">
+          <div style="font-size:0.78rem; color:var(--text-muted); font-family:var(--font-mono); margin-bottom:0.5rem;">
+            TABLA DE PROBABILIDADES &nbsp;·&nbsp;
+            <span style="color:var(--neon-blue)">■</span> fila resaltada = k del enunciado (k=2)
+          </div>
+          <table class="prob-table">
+            <thead>
+              <tr>
+                <th>k</th>
+                <th>P(X = k)</th>
+                <th>P(X ≤ k)</th>
+                <th>P(X ≥ k)</th>
+              </tr>
+            </thead>
+            <tbody id="prob-table-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="section-divider"></div>
+
+
+<!-- ====================================================
+     EJERCICIO 02 — FUNNEL DE CONVERSIÓN
+     ==================================================== -->
+<section id="ejercicio2" class="ex-section">
+  <div class="section-label violet animate-in">
+    <span class="section-label-dot" style="background:var(--neon-violet)"></span>
+    Ejercicio 02 · Probabilidad Condicional
+  </div>
+  <h2 class="section-title animate-in delay-100">
+    Funnel de Conversión
+    <br><span style="background:linear-gradient(135deg,#7c3aed,#ff2d78);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Side Quest Interactiva</span>
+  </h2>
+  <p class="section-desc animate-in delay-200">
+    Sos el director de marketing de un e-learning. Cada botón que apretás avanza una etapa
+    del funnel. El panel lateral calcula en tiempo real las probabilidades condicionales acumuladas.
+  </p>
+
+  <div class="ex2-layout animate-in delay-300">
+    <!-- Left: funnel stages -->
+    <div>
+      <div class="funnel-intro glass-card" style="margin-bottom:1.5rem;">
+        <h3 style="font-family:var(--font-head);font-size:1rem;font-weight:600;margin-bottom:0.6rem;color:var(--neon-violet);">
+          📋 Consigna
+        </h3>
+        <p style="font-size:0.88rem;color:var(--text-secondary);margin-bottom:0.5rem;">
+          Una plataforma de e-learning lanza una campaña publicitaria que llega a
+          <strong>10.000 usuarios</strong>. Cada etapa del funnel tiene una tasa de conversión específica.
+        </p>
+        <p style="font-size:0.88rem;color:var(--text-secondary);">
+          Calculá la <strong>probabilidad acumulada</strong> de que un usuario que ve el anuncio
+          llegue a cada etapa. Apretá los botones para avanzar.
+        </p>
+      </div>
+
+      <div id="funnel-stages" class="funnel-stages">
+        <!-- Rendered by ejercicio2.js -->
+        <div style="text-align:center;padding:2rem;color:var(--text-muted);">Cargando funnel...</div>
+      </div>
+
+      <!-- Summary table -->
+      <div class="funnel-summary glass-card" id="funnel-summary" style="margin-top:1.5rem;">
+        <h3>🎉 Resumen Final del Funnel</h3>
+        <table class="summary-table">
+          <thead>
+            <tr>
+              <th>Etapa</th>
+              <th>Tasa Etapa</th>
+              <th>P Acumulada</th>
+              <th>Usuarios</th>
+            </tr>
+          </thead>
+          <tbody class="summary-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Right: probability sidebar -->
+    <div class="prob-sidebar glass-card violet-glow">
+      <div class="prob-sidebar-title">Panel de Probabilidades</div>
+
+      <div class="prob-meter">
+        <div class="prob-meter-val" id="prob-meter-val">100%</div>
+        <div class="prob-meter-label">Probabilidad acumulada actual</div>
+      </div>
+
+      <div style="height:1px;background:var(--border-glass);margin:1rem 0;"></div>
+
+      <div style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;">
+        Desglose por etapa
+      </div>
+      <div class="prob-chain" id="prob-chain">
+        <!-- Rendered by ejercicio2.js -->
+      </div>
+
+      <div style="margin-top:1.5rem;padding:1rem;background:rgba(124,58,237,0.08);border:1px solid rgba(124,58,237,0.2);border-radius:var(--radius-sm);">
+        <div style="font-size:0.75rem;color:var(--text-muted);font-family:var(--font-mono);margin-bottom:0.4rem;">FÓRMULA</div>
+        <div style="font-size:0.82rem;color:#a78bfa;font-family:var(--font-mono);line-height:1.6;">
+          P(etapa N) =<br>
+          P(e₁) × P(e₂|e₁) × … × P(eₙ|eₙ₋₁)
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Unlock toast (global) -->
+<div class="unlock-toast" id="unlock-toast">🎯 Etapa desbloqueada</div>
+
+<div class="section-divider"></div>
+
+
+<!-- ====================================================
+     EJERCICIO 03 — CADENA DE MARKOV
+     ==================================================== -->
+<section id="ejercicio3" class="ex-section">
+  <div class="section-label cyan animate-in">
+    <span class="section-label-dot" style="background:var(--neon-cyan)"></span>
+    Ejercicio 03 · Procesos Estocásticos
+  </div>
+  <h2 class="section-title animate-in delay-100">
+    Cadena de Markov
+    <br><span style="background:linear-gradient(135deg,#00ffcc,#00d4ff);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Estado Estacionario</span>
+  </h2>
+  <p class="section-desc animate-in delay-200">
+    Una máquina industrial transita entre 3 estados cada semana.
+    Avanzá y retrocedé entre los pasos de la resolución — el diagrama de estados
+    se actualiza en tiempo real. Usá ← → para navegar.
+  </p>
+
+  <!-- Step navigation -->
+  <div class="step-nav animate-in delay-300">
+    <button class="step-nav-btn prev-btn" id="prev-btn" onclick="goPrev()" disabled>
+      ← Anterior
+    </button>
+    <div>
+      <div class="step-indicator" id="step-indicator-text">Paso 1 de 6</div>
+      <div class="step-dots" id="step-dots">
+        <!-- Rendered by ejercicio3.js -->
+      </div>
+    </div>
+    <button class="step-nav-btn" id="next-btn" onclick="goNext()">
+      Siguiente →
+    </button>
+  </div>
+
+  <!-- Split layout: diagram + solution -->
+  <div class="ex3-layout animate-in delay-400">
+    <!-- State diagram -->
+    <div class="glass-card">
+      <div style="font-family:var(--font-head);font-size:0.85rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:1rem;">
+        Diagrama de Estados
+      </div>
+      <div class="state-diagram-wrap">
+        <svg id="state-diagram-svg" viewBox="0 0 380 280" fill="none"
+             xmlns="http://www.w3.org/2000/svg">
+          <!-- Rendered dynamically by ejercicio3.js -->
+        </svg>
+      </div>
+      <!-- Legend -->
+      <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border-glass);">
+        <span style="font-size:0.78rem;color:#39ff14;">● Operativa</span>
+        <span style="font-size:0.78rem;color:#ff9f00;">● Mantenimiento</span>
+        <span style="font-size:0.78rem;color:#ff2d78;">● Falla Crítica</span>
+      </div>
+    </div>
+
+    <!-- Solution steps panel -->
+    <div class="glass-card solution-panel">
+      <div id="solution-steps-container">
+        <!-- Rendered dynamically by ejercicio3.js -->
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ====================================================
+     FOOTER
+     ==================================================== -->
+<footer class="main-footer">
+  <div class="footer-text">
+    UTN FRBA · Repaso Operativa <span>2026</span>
+  </div>
+  <div class="footer-text" style="font-family:var(--font-mono);font-size:0.72rem;">
+    Generado con <span>Claude</span> · Visualizaciones interactivas con Chart.js
+  </div>
+</footer>
+
+
+<!-- ====================================================
+     SCRIPTS
+     ==================================================== -->
+<script src="js/ejercicio1.js"></script>
+<script src="js/ejercicio2.js"></script>
+<script src="js/ejercicio3.js"></script>
+<script src="js/main.js"></script>
+
+<script>
+  // Keep chart lambda label in sync
+  document.getElementById('lambda-slider')?.addEventListener('input', function() {
+    const lbl = document.getElementById('chart-lambda-label');
+    if (lbl) lbl.textContent = parseFloat(this.value).toFixed(1);
+  });
+
+  // Hero piston animation (inline SVG)
+  setInterval(() => {
+    const rod = document.querySelector('.piston-rod-hero');
+    if (!rod) return;
+    rod.style.transform = 'translateY(10px)';
+    setTimeout(() => { rod.style.transform = ''; }, 300);
+  }, 2000);
+</script>
+
+</body>
+</html>
