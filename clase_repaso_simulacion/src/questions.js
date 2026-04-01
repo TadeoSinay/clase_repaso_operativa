@@ -1,123 +1,123 @@
 const QUESTIONS = [
   {
     id: 1,
-    text: "¿Cuál es la principal ventaja de la simulación frente a los modelos analíticos?",
+    text: "Una línea de producción fabrica el 60% de las piezas en máquina A y 40% en máquina B. La tasa de defectos de A es 3% y la de B es 5%. Se encuentra una pieza defectuosa. ¿Cuál es la probabilidad de que provenga de la máquina B? (Bayes)",
     options: [
-      "Siempre produce resultados más precisos",
-      "Permite modelar sistemas complejos sin solución analítica cerrada",
-      "Requiere menos datos de entrada",
-      "Es más rápida de implementar que cualquier modelo matemático"
+      "31.6%",
+      "47.4%",
+      "52.6%",
+      "60.0%"
     ],
-    correct: 1,
-    explanation: "La simulación brilla cuando el sistema es demasiado complejo para resolverse analíticamente (colas con múltiples servidores, variabilidad aleatoria, etc.)."
+    correct: 2,
+    explanation: "P(B|D) = P(D|B)·P(B) / [P(D|A)·P(A)+P(D|B)·P(B)] = (0.05×0.40) / (0.03×0.60 + 0.05×0.40) = 0.020 / 0.038 ≈ 52.6%. El teorema de Bayes invierte la condicional."
   },
   {
     id: 2,
-    text: "En el método de Monte Carlo, ¿qué rol cumplen los números pseudoaleatorios?",
+    text: "El 2% de los tornillos de una planta son defectuosos. Un sensor detecta el 95% de los defectuosos pero también genera falsos positivos en el 3% de los buenos. Si el sensor marca un tornillo como defectuoso, ¿cuál es la probabilidad real de que lo sea?",
     options: [
-      "Definen los parámetros fijos del modelo",
-      "Calculan el valor esperado de forma exacta",
-      "Representan la incertidumbre mediante muestreo probabilístico",
-      "Determinan únicamente la duración de la simulación"
+      "2.0%",
+      "39.3%",
+      "61.2%",
+      "95.0%"
     ],
-    correct: 2,
-    explanation: "Los números U(0,1) se transforman en muestras de las distribuciones de los procesos, modelando la aleatoriedad inherente del sistema."
+    correct: 1,
+    explanation: "P(D|+) = (0.95×0.02) / (0.95×0.02 + 0.03×0.98) = 0.019 / 0.0484 ≈ 39.3%. Aunque el sensor es preciso, la baja prevalencia de defectos (2%) hace que casi el 61% de las alarmas sean falsas."
   },
   {
     id: 3,
-    text: "Una cola M/M/1 tiene ρ = 0.8. ¿Cuántos clientes hay en promedio en el sistema (Ls)?",
+    text: "Un sistema de seguridad tiene 3 sensores independientes, cada uno con probabilidad de falla de 0.10. El sistema falla sólo si los 3 sensores fallan simultáneamente. ¿Cuál es la probabilidad de que el sistema funcione correctamente?",
     options: [
-      "0.8 clientes",
-      "3.2 clientes",
-      "1.6 clientes",
-      "4 clientes"
+      "72.9%",
+      "90.0%",
+      "97.0%",
+      "99.9%"
     ],
     correct: 3,
-    explanation: "Ls = ρ / (1 − ρ) = 0.8 / 0.2 = 4. ¡Ojo con confundir Ls (sistema) con Lq (sólo en cola = ρ² / (1−ρ) = 3.2)!"
+    explanation: "P(falla sistema) = 0.1³ = 0.001. P(funciona) = 1 − 0.001 = 0.999 = 99.9%. La redundancia en paralelo reduce drásticamente la probabilidad de falla total."
   },
   {
     id: 4,
-    text: "¿Por qué se descarta el período inicial (warm-up) al analizar estado estacionario?",
+    text: "El diámetro de piezas producidas sigue N(μ=50mm, σ=0.5mm). Las piezas son aceptables entre 49 y 51 mm. ¿Qué porcentaje de piezas está dentro de tolerancia?",
     options: [
-      "Los datos del inicio son estadísticamente incorrectos por definición",
-      "El sistema aún no alcanzó el estado estacionario y sesgaría las estadísticas",
-      "Consumen demasiada memoria de cómputo",
-      "Los generadores pseudoaleatorios son menos confiables al inicio"
+      "68.27%  (±1σ)",
+      "95.44%  (±2σ)",
+      "97.72%",
+      "99.73%  (±3σ)"
     ],
     correct: 1,
-    explanation: "Durante el warm-up el sistema parte de condiciones iniciales artificiales (ej. cola vacía). Incluir ese período sobreestima o subestima las métricas de largo plazo."
+    explanation: "Z₁ = (49−50)/0.5 = −2 y Z₂ = (51−50)/0.5 = +2. P(−2 < Z < 2) = 95.44%. La regla empírica: ±2σ cubre el 95.44% de la producción."
   },
   {
     id: 5,
-    text: "Para generar X ~ Exponencial(λ) con la transformada inversa (U ~ Uniforme(0,1)), la fórmula correcta es:",
+    text: "El tiempo de ensamble de un componente sigue N(μ=12 min, σ=2 min). ¿Cuál es la probabilidad de que un operario tarde MÁS de 15 minutos?",
     options: [
-      "X = λ · ln(U)",
-      "X = −ln(U) / λ",
-      "X = −λ · ln(1 − U)",
-      "Las opciones B y C son equivalentes entre sí"
+      "1.50%",
+      "6.68%",
+      "15.00%",
+      "93.32%"
     ],
-    correct: 3,
-    explanation: "Como (1−U) ~ U(0,1), −ln(U)/λ y −ln(1−U)/λ generan la misma distribución. Ambas son correctas e intercambiables."
+    correct: 1,
+    explanation: "Z = (15−12)/2 = 1.5. P(Z > 1.5) = 1 − Φ(1.5) = 1 − 0.9332 = 6.68%. Sólo 1 de cada 15 operarios superará los 15 min en condiciones normales."
   },
   {
     id: 6,
-    text: "Si se duplica el número de réplicas en una simulación Monte Carlo, el error estándar del estimador:",
+    text: "Las roturas de máquinas en una planta siguen Poisson con λ=3 roturas/semana. ¿Cuál es la probabilidad de que haya EXACTAMENTE 2 roturas en una semana?",
     options: [
-      "Se duplica",
-      "Se reduce a la mitad",
-      "No cambia",
-      "Se reduce en un factor de √2 (≈ 1.41)"
+      "0.1494",
+      "0.2240",
+      "0.3333",
+      "0.4232"
     ],
-    correct: 3,
-    explanation: "SE = σ/√n. Al pasar de n a 2n, SE nueva = σ/√(2n) = SE original / √2. Reducir el error a la mitad requiere cuadruplicar las réplicas."
+    correct: 1,
+    explanation: "P(X=2) = e⁻³ · 3² / 2! = e⁻³ · 9/2 ≈ 0.0498 · 4.5 ≈ 0.2240. La Poisson modela eventos raros en un intervalo fijo, muy útil para planificar mantenimiento."
   },
   {
     id: 7,
-    text: "¿Cuál es la diferencia clave entre verificación y validación de un modelo de simulación?",
+    text: "Llegan camiones a un depósito según Poisson con λ=5 camiones/hora. ¿Cuál es la probabilidad de que en una hora lleguen A LO SUMO 3 camiones?",
     options: [
-      "Son sinónimos; ambas evalúan si el modelo es correcto",
-      "Verificación: el modelo está bien programado; Validación: representa el sistema real",
-      "Validación: el código no tiene bugs; Verificación: el modelo es realista",
-      "Solo la validación es necesaria en proyectos industriales"
+      "0.1247",
+      "0.2650",
+      "0.4405",
+      "0.7350"
     ],
     correct: 1,
-    explanation: "Verificar = ¿construimos el modelo correctamente? (código). Validar = ¿construimos el modelo correcto? (¿refleja la realidad?). Ambas son indispensables."
+    explanation: "P(X≤3) = Σ e⁻⁵·5ᵏ/k! para k=0..3 = e⁻⁵(1+5+12.5+20.83) ≈ 0.00674·39.33 ≈ 0.2650. Con λ=5 hay alta probabilidad de superar 3 llegadas; el depósito debe dimensionarse para eso."
   },
   {
     id: 8,
-    text: "En una simulación estocástica, ¿cuál es el propósito de ejecutar múltiples réplicas independientes?",
+    text: "El tiempo entre fallas de una máquina sigue Exp(λ=0.25 fallas/hora), es decir MTTF=4 h. ¿Cuál es la probabilidad de que funcione MÁS de 6 horas sin fallar?",
     options: [
-      "Reducir el tiempo total de cómputo distribuyendo la carga",
-      "Generar más datos de entrada para el modelo",
-      "Estimar la variabilidad y construir intervalos de confianza sobre las métricas",
-      "Validar el modelo comparando con distintos parámetros"
+      "0.1054",
+      "0.2231",
+      "0.3935",
+      "0.7769"
     ],
-    correct: 2,
-    explanation: "Cada réplica usa semillas distintas → resultados distintos. El conjunto permite calcular media, varianza e IC, cuantificando la incertidumbre del estimador."
+    correct: 1,
+    explanation: "P(T > 6) = e^(−λt) = e^(−0.25·6) = e^(−1.5) ≈ 0.2231. La exponencial tiene la propiedad de falta de memoria: la máquina no 'recuerda' cuánto lleva funcionando."
   },
   {
     id: 9,
-    text: "Si en un sistema de colas λ > μ en forma sostenida, ¿qué le ocurre a la longitud de la cola?",
+    text: "El balance de materiales de una planta está dado por el sistema:\n  3x₁ + 2x₂ = 2400\n  x₁  + 4x₂ = 1600\n¿Cuántas unidades se producen del producto 1 (x₁)?",
     options: [
-      "Fluctúa estocásticamente alrededor de un valor fijo",
-      "Crece indefinidamente: el sistema es inestable (ρ > 1)",
-      "Se vacía periódicamente durante las horas valle",
-      "Converge al estado estacionario con Ls = λ/(μ − λ)"
+      "x₁ = 400",
+      "x₁ = 480",
+      "x₁ = 600",
+      "x₁ = 640"
     ],
-    correct: 1,
-    explanation: "ρ = λ/μ > 1 implica que llegan más clientes de los que se pueden atender. La cola crece sin límite → el sistema no tiene estado estacionario."
+    correct: 3,
+    explanation: "De la 2ª ecuación: x₁ = 1600−4x₂. Sustituyendo: 3(1600−4x₂)+2x₂=2400 → x₂=240. Entonces x₁=1600−960=640. Resolver sistemas lineales con matrices es clave en optimización de producción."
   },
   {
     id: 10,
-    text: "Una simulación reporta tiempo medio de espera = 4.2 min con IC 95% [3.8 ; 4.6]. El modelo analítico da 4.0 min. ¿Qué concluís?",
+    text: "La matriz de costos de un proceso es A = [[4, 2], [1, 3]]. Calculás det(A) para verificar si el sistema tiene solución única. ¿Cuál es det(A) y qué concluís?",
     options: [
-      "La simulación tiene errores; su resultado debería coincidir exactamente",
-      "El modelo analítico es incorrecto ya que no coincide con 4.2",
-      "El valor analítico cae dentro del IC → ambos modelos son estadísticamente consistentes",
-      "Hay que aumentar las réplicas hasta que los valores coincidan exactamente"
+      "det(A) = 6 → sistema sin solución",
+      "det(A) = 10 → sistema con solución única",
+      "det(A) = 10 → infinitas soluciones",
+      "det(A) = 14 → sistema inconsistente"
     ],
-    correct: 2,
-    explanation: "4.0 ∈ [3.8 ; 4.6] → no hay evidencia estadística de discrepancia. La simulación es aleatoria; la exactitud se mide con IC, no con coincidencia puntual."
+    correct: 1,
+    explanation: "det(A) = 4·3 − 2·1 = 12 − 2 = 10 ≠ 0. Si el determinante es distinto de cero, la matriz es invertible y el sistema tiene solución única. Si fuera 0, el sistema no tendría solución o tendría infinitas."
   }
 ]
 
