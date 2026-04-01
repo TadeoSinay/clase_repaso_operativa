@@ -13,6 +13,7 @@ import { getDatabase } from 'firebase/database'
 const firebaseConfig = {
   apiKey: "AIzaSyBJWX7s2-FkjxL4uRGweBrC8kBdYeRSIJM",
   authDomain: "quiz-simulacion.firebaseapp.com",
+  databaseURL: "https://quiz-simulacion-default-rtdb.firebaseio.com",
   projectId: "quiz-simulacion",
   storageBucket: "quiz-simulacion.firebasestorage.app",
   messagingSenderId: "376554611961",
