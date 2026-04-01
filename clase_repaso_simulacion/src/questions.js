@@ -1,123 +1,123 @@
 const QUESTIONS = [
   {
     id: 1,
-    text: "Una línea de producción fabrica el 60% de las piezas en máquina A y 40% en máquina B. La tasa de defectos de A es 3% y la de B es 5%. Se encuentra una pieza defectuosa. ¿Cuál es la probabilidad de que provenga de la máquina B? (Bayes)",
+    text: "¿Qué mide P(A|B)?",
     options: [
-      "31.6%",
-      "47.4%",
-      "52.6%",
-      "60.0%"
+      "La probabilidad de A y B juntos",
+      "La probabilidad de A dado que B ocurrió",
+      "La probabilidad de B dado que A ocurrió",
+      "La probabilidad de A o B"
     ],
-    correct: 2,
-    explanation: "P(B|D) = P(D|B)·P(B) / [P(D|A)·P(A)+P(D|B)·P(B)] = (0.05×0.40) / (0.03×0.60 + 0.05×0.40) = 0.020 / 0.038 ≈ 52.6%. El teorema de Bayes invierte la condicional."
+    correct: 1,
+    explanation: "P(A|B) es la probabilidad condicional de A dado B: restringe el espacio muestral al evento B ya ocurrido."
   },
   {
     id: 2,
-    text: "El 2% de los tornillos de una planta son defectuosos. Un sensor detecta el 95% de los defectuosos pero también genera falsos positivos en el 3% de los buenos. Si el sensor marca un tornillo como defectuoso, ¿cuál es la probabilidad real de que lo sea?",
+    text: "A y B son independientes. ¿Cuál es la fórmula correcta?",
     options: [
-      "2.0%",
-      "39.3%",
-      "61.2%",
-      "95.0%"
+      "P(A∩B) = P(A) + P(B)",
+      "P(A|B) = P(B)",
+      "P(A∩B) = P(A) · P(B)",
+      "P(A∪B) = P(A) · P(B)"
     ],
-    correct: 1,
-    explanation: "P(D|+) = (0.95×0.02) / (0.95×0.02 + 0.03×0.98) = 0.019 / 0.0484 ≈ 39.3%. Aunque el sensor es preciso, la baja prevalencia de defectos (2%) hace que casi el 61% de las alarmas sean falsas."
+    correct: 2,
+    explanation: "Si A y B son independientes, P(A∩B) = P(A)·P(B). Equivalentemente, P(A|B) = P(A): B no aporta información sobre A."
   },
   {
     id: 3,
-    text: "Un sistema de seguridad tiene 3 sensores independientes, cada uno con probabilidad de falla de 0.10. El sistema falla sólo si los 3 sensores fallan simultáneamente. ¿Cuál es la probabilidad de que el sistema funcione correctamente?",
+    text: "¿Qué establece el Teorema de Bayes?",
     options: [
-      "72.9%",
-      "90.0%",
-      "97.0%",
-      "99.9%"
+      "Cómo sumar probabilidades de eventos mutuamente excluyentes",
+      "Cómo actualizar una probabilidad a priori con nueva evidencia",
+      "Que dos eventos independientes tienen probabilidad cero de intersección",
+      "Cómo calcular la esperanza de una distribución continua"
     ],
-    correct: 3,
-    explanation: "P(falla sistema) = 0.1³ = 0.001. P(funciona) = 1 − 0.001 = 0.999 = 99.9%. La redundancia en paralelo reduce drásticamente la probabilidad de falla total."
+    correct: 1,
+    explanation: "Bayes permite 'invertir' la condicional: P(H|E) = P(E|H)·P(H) / P(E). Se usa para actualizar creencias con evidencia nueva."
   },
   {
     id: 4,
-    text: "El diámetro de piezas producidas sigue N(μ=50mm, σ=0.5mm). Las piezas son aceptables entre 49 y 51 mm. ¿Qué porcentaje de piezas está dentro de tolerancia?",
+    text: "En una distribución Normal N(μ, σ), ¿qué porcentaje de datos cae en el intervalo [μ−2σ, μ+2σ]?",
     options: [
-      "68.27%  (±1σ)",
-      "95.44%  (±2σ)",
-      "97.72%",
-      "99.73%  (±3σ)"
+      "68.27%",
+      "90.00%",
+      "95.44%",
+      "99.73%"
     ],
-    correct: 1,
-    explanation: "Z₁ = (49−50)/0.5 = −2 y Z₂ = (51−50)/0.5 = +2. P(−2 < Z < 2) = 95.44%. La regla empírica: ±2σ cubre el 95.44% de la producción."
+    correct: 2,
+    explanation: "Regla empírica: ±1σ → 68.27%, ±2σ → 95.44%, ±3σ → 99.73%. En control de calidad, ±2σ es el criterio más usado."
   },
   {
     id: 5,
-    text: "El tiempo de ensamble de un componente sigue N(μ=12 min, σ=2 min). ¿Cuál es la probabilidad de que un operario tarde MÁS de 15 minutos?",
+    text: "¿Qué parámetro define completamente a una distribución de Poisson?",
     options: [
-      "1.50%",
-      "6.68%",
-      "15.00%",
-      "93.32%"
+      "μ y σ",
+      "n y p",
+      "λ (tasa media de ocurrencia)",
+      "μ y λ"
     ],
-    correct: 1,
-    explanation: "Z = (15−12)/2 = 1.5. P(Z > 1.5) = 1 − Φ(1.5) = 1 − 0.9332 = 6.68%. Sólo 1 de cada 15 operarios superará los 15 min en condiciones normales."
+    correct: 2,
+    explanation: "La Poisson sólo necesita λ, que es a la vez su media y su varianza. Modela cantidad de eventos en un intervalo fijo (fallas, llegadas, defectos)."
   },
   {
     id: 6,
-    text: "Las roturas de máquinas en una planta siguen Poisson con λ=3 roturas/semana. ¿Cuál es la probabilidad de que haya EXACTAMENTE 2 roturas en una semana?",
+    text: "¿Cuál es la propiedad clave de la distribución Exponencial?",
     options: [
-      "0.1494",
-      "0.2240",
-      "0.3333",
-      "0.4232"
+      "Su media siempre es mayor que su varianza",
+      "Es simétrica respecto a la media",
+      "No tiene memoria: P(T>s+t | T>s) = P(T>t)",
+      "Solo toma valores enteros positivos"
     ],
-    correct: 1,
-    explanation: "P(X=2) = e⁻³ · 3² / 2! = e⁻³ · 9/2 ≈ 0.0498 · 4.5 ≈ 0.2240. La Poisson modela eventos raros en un intervalo fijo, muy útil para planificar mantenimiento."
+    correct: 2,
+    explanation: "La falta de memoria significa que el tiempo ya transcurrido no afecta la probabilidad futura. Por eso modela tiempos entre llegadas y tiempos de vida."
   },
   {
     id: 7,
-    text: "Llegan camiones a un depósito según Poisson con λ=5 camiones/hora. ¿Cuál es la probabilidad de que en una hora lleguen A LO SUMO 3 camiones?",
+    text: "La distribución Poisson es apropiada para modelar:",
     options: [
-      "0.1247",
-      "0.2650",
-      "0.4405",
-      "0.7350"
+      "Tiempos de espera entre eventos",
+      "Cantidad de eventos en un intervalo, cuando son raros e independientes",
+      "Variables continuas con distribución simétrica",
+      "Proporciones entre 0 y 1"
     ],
     correct: 1,
-    explanation: "P(X≤3) = Σ e⁻⁵·5ᵏ/k! para k=0..3 = e⁻⁵(1+5+12.5+20.83) ≈ 0.00674·39.33 ≈ 0.2650. Con λ=5 hay alta probabilidad de superar 3 llegadas; el depósito debe dimensionarse para eso."
+    explanation: "Poisson cuenta eventos discretos en un intervalo (tiempo, área, volumen) cuando ocurren a tasa constante e independientemente entre sí."
   },
   {
     id: 8,
-    text: "El tiempo entre fallas de una máquina sigue Exp(λ=0.25 fallas/hora), es decir MTTF=4 h. ¿Cuál es la probabilidad de que funcione MÁS de 6 horas sin fallar?",
+    text: "¿Qué indica que el determinante de una matriz A sea igual a cero?",
     options: [
-      "0.1054",
-      "0.2231",
-      "0.3935",
-      "0.7769"
+      "La matriz tiene solución única",
+      "La matriz es invertible",
+      "Las filas son linealmente dependientes; el sistema no tiene solución única",
+      "Todos los elementos de A son cero"
     ],
-    correct: 1,
-    explanation: "P(T > 6) = e^(−λt) = e^(−0.25·6) = e^(−1.5) ≈ 0.2231. La exponencial tiene la propiedad de falta de memoria: la máquina no 'recuerda' cuánto lleva funcionando."
+    correct: 2,
+    explanation: "det(A) = 0 → la matriz es singular (no invertible). Las filas son linealmente dependientes, por lo que el sistema Ax=b no tiene solución única."
   },
   {
     id: 9,
-    text: "El balance de materiales de una planta está dado por el sistema:\n  3x₁ + 2x₂ = 2400\n  x₁  + 4x₂ = 1600\n¿Cuántas unidades se producen del producto 1 (x₁)?",
+    text: "Para resolver el sistema Ax = b usando la inversa, la fórmula es:",
     options: [
-      "x₁ = 400",
-      "x₁ = 480",
-      "x₁ = 600",
-      "x₁ = 640"
+      "x = b · A",
+      "x = A · b",
+      "x = A⁻¹ · b",
+      "x = b⁻¹ · A"
     ],
-    correct: 3,
-    explanation: "De la 2ª ecuación: x₁ = 1600−4x₂. Sustituyendo: 3(1600−4x₂)+2x₂=2400 → x₂=240. Entonces x₁=1600−960=640. Resolver sistemas lineales con matrices es clave en optimización de producción."
+    correct: 2,
+    explanation: "Si det(A) ≠ 0, se puede multiplicar a izquierda por A⁻¹: A⁻¹·A·x = A⁻¹·b → x = A⁻¹·b."
   },
   {
     id: 10,
-    text: "La matriz de costos de un proceso es A = [[4, 2], [1, 3]]. Calculás det(A) para verificar si el sistema tiene solución única. ¿Cuál es det(A) y qué concluís?",
+    text: "¿Cuál es la relación entre la distribución Exponencial y la Poisson?",
     options: [
-      "det(A) = 6 → sistema sin solución",
-      "det(A) = 10 → sistema con solución única",
-      "det(A) = 10 → infinitas soluciones",
-      "det(A) = 14 → sistema inconsistente"
+      "No tienen relación",
+      "Si los eventos siguen Poisson(λ), el tiempo entre eventos sigue Exp(λ)",
+      "Si los eventos siguen Poisson(λ), el tiempo entre eventos sigue Normal(λ, λ)",
+      "La Exponencial es un caso especial de la Poisson para n grande"
     ],
     correct: 1,
-    explanation: "det(A) = 4·3 − 2·1 = 12 − 2 = 10 ≠ 0. Si el determinante es distinto de cero, la matriz es invertible y el sistema tiene solución única. Si fuera 0, el sistema no tendría solución o tendría infinitas."
+    explanation: "Son dos caras del mismo proceso: Poisson cuenta cuántos eventos hay en un intervalo; Exponencial mide cuánto tiempo pasa entre un evento y el siguiente."
   }
 ]
 
