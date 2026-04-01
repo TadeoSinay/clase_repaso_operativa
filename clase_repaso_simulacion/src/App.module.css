@@ -172,6 +172,7 @@
 .optGreen  { background: #27ae60; }
 
 /* ── feedback ────────────────────────────────────────────────────────────── */
+.screenFeedback  { justify-content: flex-start; padding-top: 2rem; }
 .feedbackCorrect { background: #052e16; }
 .feedbackWrong   { background: #1a0505; }
 
@@ -283,38 +284,53 @@
 .resultsScore span { font-size: 1.2rem; color: rgba(240,244,255,0.5); }
 .resultsMax { font-size: 0.85rem; color: rgba(240,244,255,0.4); margin-bottom: 2rem; }
 
-.leaderboard {
-  background: rgba(0,0,0,0.2);
+/* ── leaderboard en vivo ─────────────────────────────────────── */
+.lbFull {
+  background: rgba(0,0,0,0.25);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 16px;
   padding: 1.25rem;
   margin-bottom: 1.5rem;
   text-align: left;
+  width: 100%;
 }
+
+.lbCompact {
+  background: rgba(0,0,0,0.2);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  margin: 0.75rem 0 1rem;
+  width: 100%;
+  max-height: 160px;
+  overflow-y: auto;
+}
+
 .lbTitle {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1rem;
   font-weight: 600;
   color: #f0f4ff;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   text-align: center;
 }
 .lbEmpty { color: rgba(240,244,255,0.4); font-size: 0.85rem; text-align: center; }
 
-.lbTable { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+.lbTable { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
 .lbTable th {
-  color: rgba(240,244,255,0.45);
+  color: rgba(240,244,255,0.4);
   font-weight: 500;
-  padding: 0.3rem 0.5rem;
+  padding: 0.25rem 0.5rem;
   text-align: left;
   border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 .lbTable td {
-  padding: 0.45rem 0.5rem;
-  color: rgba(240,244,255,0.8);
+  padding: 0.4rem 0.5rem;
+  color: rgba(240,244,255,0.75);
   border-bottom: 1px solid rgba(255,255,255,0.04);
 }
-.lbHighlight td { color: #c4b5fd; font-weight: 600; }
+.lbMe td  { color: #c4b5fd; font-weight: 600; }
+.lbDone td { opacity: 0.65; }
 
 .restartBtn {
   background: rgba(124,58,237,0.3);

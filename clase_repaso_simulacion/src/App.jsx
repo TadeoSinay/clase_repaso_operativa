@@ -1,38 +1,100 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { ref, set, onValue, serverTimestamp } from 'firebase/database'
 import confetti from 'canvas-confetti'
+import { db } from './firebase.js'
 import QUESTIONS from './questions.js'
 import styles from './App.module.css'
 
 const TIMER_SECONDS = 20
-const MAX_SCORE_PER_Q = 2000
-const LS_KEY = 'quiz_simulacion_scores'
+const TOTAL_Q = QUESTIONS.length
 
-// ── helpers ───────────────────────────────────────────────────────────────────
-function loadScores() {
-  try { return JSON.parse(localStorage.getItem(LS_KEY)) || [] }
-  catch { return [] }
-}
-function saveScore(name, score) {
-  const scores = loadScores()
-  scores.push({ name, score, date: new Date().toLocaleDateString('es-AR') })
-  scores.sort((a, b) => b.score - a.score)
-  localStorage.setItem(LS_KEY, JSON.stringify(scores.slice(0, 10)))
+// ── Genera un ID único por jugador en esta sesión ─────────────────────────────
+function makePlayerId() {
+  return Math.random().toString(36).slice(2, 10)
 }
 
-const OPTION_COLORS = [styles.optRed, styles.optBlue, styles.optYellow, styles.optGreen]
-const OPTION_ICONS  = ['▲', '◆', '●', '♥']
-const OPTION_LABELS = ['A', 'B', 'C', 'D']
+// ── Clave de sesión = fecha del día (una sesión por clase) ────────────────────
+function todayKey() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
 
-// ── screens ───────────────────────────────────────────────────────────────────
+const SESSION = todayKey()
+
+// ── Helpers Firebase ──────────────────────────────────────────────────────────
+function playerRef(pid) {
+  return ref(db, `sessions/${SESSION}/players/${pid}`)
+}
+
+// ── Colores / íconos de opciones ──────────────────────────────────────────────
+const OPT_COLORS  = [styles.optRed, styles.optBlue, styles.optYellow, styles.optGreen]
+const OPT_ICONS   = ['▲', '◆', '●', '♥']
+const OPT_LABELS  = ['A', 'B', 'C', 'D']
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  LEADERBOARD EN TIEMPO REAL
+// ══════════════════════════════════════════════════════════════════════════════
+function LiveLeaderboard({ currentPid, compact = false }) {
+  const [players, setPlayers] = useState([])
+
+  useEffect(() => {
+    const r = ref(db, `sessions/${SESSION}/players`)
+    const unsub = onValue(r, snap => {
+      if (!snap.exists()) { setPlayers([]); return }
+      const list = Object.entries(snap.val()).map(([id, p]) => ({ id, ...p }))
+      list.sort((a, b) => b.score - a.score)
+      setPlayers(list)
+    })
+    return () => unsub()
+  }, [])
+
+  if (players.length === 0) return null
+
+  return (
+    <div className={compact ? styles.lbCompact : styles.lbFull}>
+      {!compact && <h3 className={styles.lbTitle}>🏆 Ranking en vivo</h3>}
+      <table className={styles.lbTable}>
+        {!compact && (
+          <thead>
+            <tr><th>#</th><th>Jugador</th><th>Puntaje</th><th>Progreso</th></tr>
+          </thead>
+        )}
+        <tbody>
+          {players.map((p, i) => (
+            <tr
+              key={p.id}
+              className={`${p.id === currentPid ? styles.lbMe : ''} ${p.done ? styles.lbDone : ''}`}
+            >
+              <td>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td>
+              <td>{p.name}{p.id === currentPid ? ' (vos)' : ''}</td>
+              <td><strong>{p.score}</strong></td>
+              <td>
+                {p.done
+                  ? '✅ Terminó'
+                  : `${p.question ?? 0}/${TOTAL_Q}`}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+//  PANTALLA: LOGIN
+// ══════════════════════════════════════════════════════════════════════════════
 function LoginScreen({ onJoin }) {
   const [name, setName] = useState('')
   const inputRef = useRef()
   useEffect(() => inputRef.current?.focus(), [])
-  const handleSubmit = (e) => {
+
+  const handleSubmit = e => {
     e.preventDefault()
     const trimmed = name.trim()
     if (trimmed) onJoin(trimmed)
   }
+
   return (
     <div className={styles.screen}>
       <div className={styles.loginCard}>
@@ -51,11 +113,7 @@ function LoginScreen({ onJoin }) {
             onChange={e => setName(e.target.value)}
             maxLength={30}
           />
-          <button
-            className={styles.joinBtn}
-            type="submit"
-            disabled={!name.trim()}
-          >
+          <button className={styles.joinBtn} type="submit" disabled={!name.trim()}>
             Unirme al Quiz →
           </button>
         </form>
@@ -65,11 +123,14 @@ function LoginScreen({ onJoin }) {
   )
 }
 
-function QuestionScreen({ question, qIndex, total, onAnswer, timeLeft, maxTime }) {
+// ══════════════════════════════════════════════════════════════════════════════
+//  PANTALLA: PREGUNTA
+// ══════════════════════════════════════════════════════════════════════════════
+function QuestionScreen({ question, qIndex, onAnswer, timeLeft }) {
   const [selected, setSelected] = useState(null)
-  const progress = timeLeft / maxTime
+  const progress = timeLeft / TIMER_SECONDS
 
-  const handleSelect = (i) => {
+  const handleSelect = i => {
     if (selected !== null) return
     setSelected(i)
     onAnswer(i, timeLeft)
@@ -77,9 +138,8 @@ function QuestionScreen({ question, qIndex, total, onAnswer, timeLeft, maxTime }
 
   return (
     <div className={styles.screen}>
-      {/* header */}
       <div className={styles.qHeader}>
-        <span className={styles.qCounter}>Pregunta {qIndex + 1} / {total}</span>
+        <span className={styles.qCounter}>Pregunta {qIndex + 1} / {TOTAL_Q}</span>
         <div className={styles.timerWrap}>
           <div
             className={`${styles.timerBar} ${timeLeft <= 5 ? styles.timerDanger : ''}`}
@@ -91,22 +151,20 @@ function QuestionScreen({ question, qIndex, total, onAnswer, timeLeft, maxTime }
         </div>
       </div>
 
-      {/* question */}
       <div className={styles.questionBox}>
         <p className={styles.questionText}>{question.text}</p>
       </div>
 
-      {/* options */}
       <div className={styles.optionsGrid}>
         {question.options.map((opt, i) => (
           <button
             key={i}
-            className={`${styles.optBtn} ${OPTION_COLORS[i]} ${selected === i ? styles.optSelected : ''}`}
+            className={`${styles.optBtn} ${OPT_COLORS[i]} ${selected === i ? styles.optSelected : ''}`}
             onClick={() => handleSelect(i)}
             disabled={selected !== null}
           >
-            <span className={styles.optIcon}>{OPTION_ICONS[i]}</span>
-            <span className={styles.optLabel}>{OPTION_LABELS[i]})</span>
+            <span className={styles.optIcon}>{OPT_ICONS[i]}</span>
+            <span className={styles.optLabel}>{OPT_LABELS[i]})</span>
             <span className={styles.optText}>{opt}</span>
           </button>
         ))}
@@ -115,18 +173,19 @@ function QuestionScreen({ question, qIndex, total, onAnswer, timeLeft, maxTime }
   )
 }
 
-function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onNext, isLast }) {
+// ══════════════════════════════════════════════════════════════════════════════
+//  PANTALLA: FEEDBACK
+// ══════════════════════════════════════════════════════════════════════════════
+function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onNext, isLast, pid }) {
   const isCorrect = selectedIndex === question.correct
   const timedOut  = selectedIndex === null
 
   useEffect(() => {
-    if (isCorrect) {
-      confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } })
-    }
+    if (isCorrect) confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } })
   }, [isCorrect])
 
   return (
-    <div className={`${styles.screen} ${isCorrect ? styles.feedbackCorrect : styles.feedbackWrong}`}>
+    <div className={`${styles.screen} ${styles.screenFeedback} ${isCorrect ? styles.feedbackCorrect : styles.feedbackWrong}`}>
       <div className={styles.feedbackCard}>
         <div className={styles.feedbackEmoji}>
           {timedOut ? '⏰' : isCorrect ? '✅' : '❌'}
@@ -137,7 +196,7 @@ function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onN
 
         {!isCorrect && (
           <p className={styles.feedbackAnswer}>
-            La respuesta correcta era: <strong>{OPTION_LABELS[question.correct]}) {question.options[question.correct]}</strong>
+            Correcta: <strong>{OPT_LABELS[question.correct]}) {question.options[question.correct]}</strong>
           </p>
         )}
 
@@ -151,47 +210,30 @@ function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onN
           <span className={styles.totalScore}>Total: {totalScore} pts</span>
         </div>
 
+        {/* ranking compacto mientras el alumno lee el feedback */}
+        <LiveLeaderboard currentPid={pid} compact />
+
         <button className={styles.nextBtn} onClick={onNext}>
-          {isLast ? 'Ver resultados →' : 'Siguiente →'}
+          {isLast ? 'Ver resultados finales →' : 'Siguiente →'}
         </button>
       </div>
     </div>
   )
 }
 
-function ResultsScreen({ playerName, totalScore, onRestart }) {
-  const scores = loadScores()
-
+// ══════════════════════════════════════════════════════════════════════════════
+//  PANTALLA: RESULTADOS FINALES
+// ══════════════════════════════════════════════════════════════════════════════
+function ResultsScreen({ playerName, totalScore, pid, onRestart }) {
   return (
     <div className={styles.screen}>
       <div className={styles.resultsCard}>
         <div className={styles.resultsTrophy}>🏆</div>
         <h2 className={styles.resultsName}>{playerName}</h2>
-        <p className={styles.resultsScore}>{totalScore} <span>puntos</span></p>
-        <p className={styles.resultsMax}>sobre {QUESTIONS.length * MAX_SCORE_PER_Q} posibles</p>
+        <p className={styles.resultsScore}>{totalScore} <span>pts</span></p>
+        <p className={styles.resultsMax}>sobre {TOTAL_Q * 2000} posibles · sesión {SESSION}</p>
 
-        <div className={styles.leaderboard}>
-          <h3 className={styles.lbTitle}>🥇 Mejores puntajes</h3>
-          {scores.length === 0 ? (
-            <p className={styles.lbEmpty}>Aún no hay puntajes guardados.</p>
-          ) : (
-            <table className={styles.lbTable}>
-              <thead>
-                <tr><th>#</th><th>Jugador</th><th>Puntaje</th><th>Fecha</th></tr>
-              </thead>
-              <tbody>
-                {scores.map((s, i) => (
-                  <tr key={i} className={s.name === playerName && s.score === totalScore ? styles.lbHighlight : ''}>
-                    <td>{i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : i + 1}</td>
-                    <td>{s.name}</td>
-                    <td>{s.score}</td>
-                    <td>{s.date}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </div>
+        <LiveLeaderboard currentPid={pid} compact={false} />
 
         <button className={styles.restartBtn} onClick={onRestart}>
           Jugar de nuevo
@@ -201,20 +243,23 @@ function ResultsScreen({ playerName, totalScore, onRestart }) {
   )
 }
 
-// ── main app ──────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+//  APP PRINCIPAL
+// ══════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const [screen, setScreen]           = useState('login')   // login | question | feedback | results
-  const [playerName, setPlayerName]   = useState('')
-  const [qIndex, setQIndex]           = useState(0)
-  const [timeLeft, setTimeLeft]       = useState(TIMER_SECONDS)
-  const [selectedIndex, setSelected]  = useState(null)
-  const [pointsEarned, setPoints]     = useState(0)
-  const [totalScore, setTotalScore]   = useState(0)
+  const [screen, setScreen]         = useState('login')
+  const [playerName, setPlayerName] = useState('')
+  const [pid]                       = useState(makePlayerId)
+  const [qIndex, setQIndex]         = useState(0)
+  const [timeLeft, setTimeLeft]     = useState(TIMER_SECONDS)
+  const [selectedIndex, setSelected]= useState(null)
+  const [pointsEarned, setPoints]   = useState(0)
+  const [totalScore, setTotalScore] = useState(0)
   const timerRef = useRef(null)
 
   const currentQ = QUESTIONS[qIndex]
 
-  // timer tick
+  // ── timer ──────────────────────────────────────────────────────
   useEffect(() => {
     if (screen !== 'question') return
     setTimeLeft(TIMER_SECONDS)
@@ -232,6 +277,7 @@ export default function App() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [screen, qIndex])
 
+  // ── responder ─────────────────────────────────────────────────
   const handleAnswer = useCallback((idx, remaining) => {
     clearInterval(timerRef.current)
     const correct = idx === currentQ.correct
@@ -240,16 +286,36 @@ export default function App() {
       const speedBonus = Math.round((remaining / TIMER_SECONDS) * 1000)
       pts = 1000 + speedBonus
     }
+    const newTotal = totalScore + pts
     setSelected(idx)
     setPoints(pts)
-    setTotalScore(prev => prev + pts)
-    setScreen('feedback')
-  }, [currentQ])
+    setTotalScore(newTotal)
 
+    // actualizar Firebase en tiempo real
+    set(playerRef(pid), {
+      name: playerName,
+      score: newTotal,
+      question: qIndex + 1,
+      done: false,
+      updatedAt: serverTimestamp()
+    })
+
+    setScreen('feedback')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentQ, totalScore, pid, playerName, qIndex])
+
+  // ── siguiente pregunta ────────────────────────────────────────
   const handleNext = () => {
-    const isLast = qIndex === QUESTIONS.length - 1
+    const isLast = qIndex === TOTAL_Q - 1
     if (isLast) {
-      saveScore(playerName, totalScore + pointsEarned)
+      // marcar como terminado en Firebase
+      set(playerRef(pid), {
+        name: playerName,
+        score: totalScore,
+        question: TOTAL_Q,
+        done: true,
+        updatedAt: serverTimestamp()
+      })
       setScreen('results')
     } else {
       setQIndex(i => i + 1)
@@ -258,6 +324,25 @@ export default function App() {
     }
   }
 
+  // ── join ──────────────────────────────────────────────────────
+  const handleJoin = name => {
+    setPlayerName(name)
+    setQIndex(0)
+    setTotalScore(0)
+
+    // registrar en Firebase
+    set(playerRef(pid), {
+      name,
+      score: 0,
+      question: 0,
+      done: false,
+      updatedAt: serverTimestamp()
+    })
+
+    setScreen('question')
+  }
+
+  // ── restart ───────────────────────────────────────────────────
   const handleRestart = () => {
     setScreen('login')
     setPlayerName('')
@@ -267,22 +352,13 @@ export default function App() {
     setSelected(null)
   }
 
-  const handleJoin = (name) => {
-    setPlayerName(name)
-    setQIndex(0)
-    setTotalScore(0)
-    setScreen('question')
-  }
-
   if (screen === 'login')    return <LoginScreen onJoin={handleJoin} />
   if (screen === 'question') return (
     <QuestionScreen
       question={currentQ}
       qIndex={qIndex}
-      total={QUESTIONS.length}
       onAnswer={handleAnswer}
       timeLeft={timeLeft}
-      maxTime={TIMER_SECONDS}
     />
   )
   if (screen === 'feedback') return (
@@ -292,13 +368,15 @@ export default function App() {
       pointsEarned={pointsEarned}
       totalScore={totalScore}
       onNext={handleNext}
-      isLast={qIndex === QUESTIONS.length - 1}
+      isLast={qIndex === TOTAL_Q - 1}
+      pid={pid}
     />
   )
-  if (screen === 'results')  return (
+  if (screen === 'results') return (
     <ResultsScreen
       playerName={playerName}
       totalScore={totalScore}
+      pid={pid}
       onRestart={handleRestart}
     />
   )
