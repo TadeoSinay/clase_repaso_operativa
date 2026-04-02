@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { ref, set, onValue, update, serverTimestamp } from 'firebase/database'
+import { ref, set, onValue, update } from 'firebase/database'
 import confetti from 'canvas-confetti'
 import { db } from './firebase.js'
 import QUESTIONS from './questions.js'
@@ -15,59 +15,58 @@ function todayKey() {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
 }
-const SESSION = todayKey()
-const sessionRef = ref(db, `sessions/${SESSION}`)
-const playersRef = ref(db, `sessions/${SESSION}/players`)
-const statusRef  = ref(db, `sessions/${SESSION}/status`)
-const hostRef    = ref(db, `sessions/${SESSION}/hostId`)
+
+const SESSION      = todayKey()
+const sessionRef   = ref(db, `sessions/${SESSION}`)
+const playersRef   = ref(db, `sessions/${SESSION}/players`)
+const statusRef    = ref(db, `sessions/${SESSION}/status`)
+const hostRef      = ref(db, `sessions/${SESSION}/hostId`)
+const curQRef      = ref(db, `sessions/${SESSION}/currentQuestion`)   // ← host controla esto
 
 const OPT_COLORS = [styles.optRed, styles.optBlue, styles.optYellow, styles.optGreen]
 const OPT_ICONS  = ['▲', '◆', '●', '♥']
 const OPT_LABELS = ['A', 'B', 'C', 'D']
 
-// ── Hook: estado global de la sesión ──────────────────────────────────────────
+// ── Hook global ───────────────────────────────────────────────────────────────
 function useSession() {
-  const [status, setStatus]   = useState(null)   // 'waiting' | 'playing' | 'finished'
-  const [players, setPlayers] = useState([])
-  const [hostId, setHostId]   = useState(null)
+  const [status,          setStatus]          = useState(null)
+  const [players,         setPlayers]         = useState([])
+  const [hostId,          setHostId]          = useState(null)
+  const [currentQuestion, setCurrentQuestion] = useState(0)   // controlado por host
 
   useEffect(() => {
-    const unsubStatus = onValue(statusRef, snap => {
-      setStatus(snap.exists() ? snap.val() : 'waiting')
-    })
-    const unsubPlayers = onValue(playersRef, snap => {
-      if (!snap.exists()) { setPlayers([]); return }
-      const list = Object.entries(snap.val()).map(([id, p]) => ({ id, ...p }))
+    const u1 = onValue(statusRef,  s => setStatus(s.exists()          ? s.val() : 'waiting'))
+    const u2 = onValue(hostRef,    s => setHostId(s.exists()          ? s.val() : null))
+    const u3 = onValue(curQRef,    s => setCurrentQuestion(s.exists() ? s.val() : 0))
+    const u4 = onValue(playersRef, s => {
+      if (!s.exists()) { setPlayers([]); return }
+      const list = Object.entries(s.val()).map(([id, p]) => ({ id, ...p }))
       list.sort((a, b) => b.score - a.score)
       setPlayers(list)
     })
-    const unsubHost = onValue(hostRef, snap => {
-      setHostId(snap.exists() ? snap.val() : null)
-    })
-    return () => { unsubStatus(); unsubPlayers(); unsubHost() }
+    return () => { u1(); u2(); u3(); u4() }
   }, [])
 
-  return { status, players, hostId }
+  return { status, players, hostId, currentQuestion }
 }
 
-// ── Leaderboard ───────────────────────────────────────────────────────────────
-function Leaderboard({ currentPid, compact = false }) {
-  const { players } = useSession()
+// ── Ranking component (reutilizado) ───────────────────────────────────────────
+function RankingTable({ currentPid, players, title }) {
   if (!players.length) return null
   return (
-    <div className={compact ? styles.lbCompact : styles.lbFull}>
-      {!compact && <h3 className={styles.lbTitle}>🏆 Ranking final</h3>}
+    <div className={styles.lbFull}>
+      {title && <h3 className={styles.lbTitle}>{title}</h3>}
       <table className={styles.lbTable}>
-        {!compact && (
-          <thead><tr><th>#</th><th>Jugador</th><th>Puntaje</th><th>Estado</th></tr></thead>
-        )}
+        <thead><tr><th>#</th><th>Jugador</th><th>Puntaje</th><th>Pregunta</th></tr></thead>
         <tbody>
           {players.map((p, i) => (
             <tr key={p.id} className={p.id === currentPid ? styles.lbMe : ''}>
               <td>{i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</td>
               <td>{p.name}{p.id === currentPid ? ' (vos)' : ''}</td>
               <td><strong>{p.score}</strong></td>
-              <td>{p.done ? '✅' : `${p.question ?? 0}/${TOTAL_Q}`}</td>
+              <td style={{fontSize:'0.8rem', color:'rgba(240,244,255,0.5)'}}>
+                {p.done ? '✅ Terminó' : `${p.question ?? 0}/${TOTAL_Q}`}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -86,8 +85,8 @@ function LoginScreen({ onJoin }) {
 
   const handleSubmit = e => {
     e.preventDefault()
-    const trimmed = name.trim()
-    if (trimmed) onJoin(trimmed)
+    const t = name.trim()
+    if (t) onJoin(t)
   }
 
   return (
@@ -126,12 +125,12 @@ function WaitingRoom({ pid, onStart }) {
   const isHost = hostId === pid
 
   const handleStart = async () => {
+    await set(curQRef,   0)
     await set(statusRef, 'playing')
     onStart()
   }
-
   const handleReset = async () => {
-    await set(sessionRef, { status: 'waiting', players: {}, hostId })
+    await set(sessionRef, { status: 'waiting', players: {}, hostId, currentQuestion: 0 })
   }
 
   return (
@@ -141,38 +140,25 @@ function WaitingRoom({ pid, onStart }) {
           <span className={styles.waitingIcon}>⏳</span>
           <h2 className={styles.waitingTitle}>Sala de espera</h2>
           <p className={styles.waitingSub}>
-            {isHost
-              ? 'Cuando estén todos, presioná Iniciar.'
-              : 'Esperando que el profe inicie el quiz…'}
+            {isHost ? 'Cuando estén todos, presioná Iniciar.' : 'Esperando que el profe inicie el quiz…'}
           </p>
         </div>
-
         <div className={styles.playerList}>
-          <p className={styles.playerCount}>{players.length} jugador{players.length !== 1 ? 'es' : ''} conectado{players.length !== 1 ? 's' : ''}</p>
+          <p className={styles.playerCount}>{players.length} jugador{players.length!==1?'es':''} conectado{players.length!==1?'s':''}</p>
           <div className={styles.playerChips}>
-            {players.map(p => (
-              <span key={p.id} className={styles.playerChip}>{p.name}</span>
-            ))}
+            {players.map(p => <span key={p.id} className={styles.playerChip}>{p.name}</span>)}
           </div>
         </div>
-
         {isHost && (
           <div className={styles.hostControls}>
             <p className={styles.hostBadge}>👑 Vos sos el profe — controlás el quiz</p>
             <button className={styles.startBtn} onClick={handleStart} disabled={players.length === 0}>
               ▶ Iniciar quiz ({players.length} jugadores)
             </button>
-            <button className={styles.resetBtn} onClick={handleReset}>
-              🗑 Limpiar sesión
-            </button>
+            <button className={styles.resetBtn} onClick={handleReset}>🗑 Limpiar sesión</button>
           </div>
         )}
-
-        {!isHost && (
-          <div className={styles.waitingDots}>
-            <span /><span /><span />
-          </div>
-        )}
+        {!isHost && <div className={styles.waitingDots}><span /><span /><span /></div>}
       </div>
     </div>
   )
@@ -196,25 +182,18 @@ function QuestionScreen({ question, qIndex, onAnswer, timeLeft }) {
       <div className={styles.qHeader}>
         <span className={styles.qCounter}>Pregunta {qIndex + 1} / {TOTAL_Q}</span>
         <div className={styles.timerWrap}>
-          <div
-            className={`${styles.timerBar} ${timeLeft <= 5 ? styles.timerDanger : ''}`}
-            style={{ width: `${progress * 100}%` }}
-          />
-          <span className={`${styles.timerNum} ${timeLeft <= 5 ? styles.timerDanger : ''}`}>
-            {timeLeft}
-          </span>
+          <div className={`${styles.timerBar} ${timeLeft<=5?styles.timerDanger:''}`} style={{width:`${progress*100}%`}} />
+          <span className={`${styles.timerNum} ${timeLeft<=5?styles.timerDanger:''}`}>{timeLeft}</span>
         </div>
       </div>
-
       <div className={styles.questionBox}>
         <p className={styles.questionText}>{question.text}</p>
       </div>
-
       <div className={styles.optionsGrid}>
         {question.options.map((opt, i) => (
           <button
             key={i}
-            className={`${styles.optBtn} ${OPT_COLORS[i]} ${selected === i ? styles.optSelected : ''}`}
+            className={`${styles.optBtn} ${OPT_COLORS[i]} ${selected===i?styles.optSelected:''}`}
             onClick={() => handleSelect(i)}
             disabled={selected !== null}
           >
@@ -229,9 +208,9 @@ function QuestionScreen({ question, qIndex, onAnswer, timeLeft }) {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// PANTALLA 4: FEEDBACK
+// PANTALLA 4: FEEDBACK (respuesta + explicación)
 // ══════════════════════════════════════════════════════════════════════════════
-function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onNext, isLast }) {
+function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onShowRanking }) {
   const isCorrect = selectedIndex === question.correct
   const timedOut  = selectedIndex === null
 
@@ -240,9 +219,9 @@ function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onN
   }, [isCorrect])
 
   return (
-    <div className={`${styles.screen} ${styles.screenFeedback} ${isCorrect ? styles.feedbackCorrect : styles.feedbackWrong}`}>
+    <div className={`${styles.screen} ${styles.screenFeedback} ${isCorrect?styles.feedbackCorrect:styles.feedbackWrong}`}>
       <div className={styles.feedbackCard}>
-        <div className={styles.feedbackEmoji}>{timedOut ? '⏰' : isCorrect ? '✅' : '❌'}</div>
+        <div className={styles.feedbackEmoji}>{timedOut?'⏰':isCorrect?'✅':'❌'}</div>
         <h2 className={styles.feedbackTitle}>
           {timedOut ? '¡Tiempo!' : isCorrect ? '¡Correcto!' : 'Incorrecto'}
         </h2>
@@ -259,8 +238,8 @@ function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onN
           <span className={styles.pointsEarned}>+{pointsEarned} pts</span>
           <span className={styles.totalScore}>Total: {totalScore} pts</span>
         </div>
-        <button className={styles.nextBtn} onClick={onNext}>
-          {isLast ? 'Finalizar →' : 'Siguiente →'}
+        <button className={styles.nextBtn} onClick={onShowRanking}>
+          Ver ranking →
         </button>
       </div>
     </div>
@@ -268,41 +247,57 @@ function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onN
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// PANTALLA 5: ESPERAR FIN (alumno terminó, espera al profe)
+// PANTALLA 5: RANKING ENTRE PREGUNTAS (host avanza, alumnos esperan)
 // ══════════════════════════════════════════════════════════════════════════════
-function WaitingEnd({ playerName, totalScore, pid }) {
-  const { players, hostId } = useSession()
-  const isHost = hostId === pid
-  const done = players.filter(p => p.done).length
+function InterRanking({ pid, qIndex, totalScore, onNext }) {
+  const { players, hostId, currentQuestion } = useSession()
+  const isHost   = hostId === pid
+  const isLast   = qIndex === TOTAL_Q - 1
+  const answered = players.filter(p => (p.question ?? 0) > qIndex).length
 
-  const handleFinish = async () => {
-    await set(statusRef, 'finished')
+  // Alumnos: cuando el host avanza currentQuestion, se van solos
+  useEffect(() => {
+    if (!isHost && currentQuestion > qIndex) {
+      onNext()
+    }
+  }, [currentQuestion, isHost, qIndex, onNext])
+
+  const handleNext = async () => {
+    if (isLast) {
+      await set(statusRef, 'finished')
+    } else {
+      await set(curQRef, qIndex + 1)
+      onNext()
+    }
   }
 
   return (
     <div className={styles.screen}>
-      <div className={styles.waitingCard}>
-        <span className={styles.waitingIcon}>🎯</span>
-        <h2 className={styles.waitingTitle}>¡Terminaste!</h2>
-        <p className={styles.waitingSub}>{playerName} · {totalScore} pts</p>
-        <p className={styles.playerCount}>{done} / {players.length} jugadores terminaron</p>
-
-        <div className={styles.playerChips} style={{marginTop:'0.5rem'}}>
-          {players.map(p => (
-            <span key={p.id} className={`${styles.playerChip} ${p.done ? styles.chipDone : styles.chipPending}`}>
-              {p.done ? '✅' : '⏳'} {p.name}
-            </span>
-          ))}
+      <div className={styles.rankingCard}>
+        <div className={styles.rankingHeader}>
+          <h2 className={styles.rankingTitle}>
+            📊 Ranking — Después de pregunta {qIndex + 1}
+          </h2>
+          <p className={styles.rankingAnswered}>
+            {answered} / {players.length} respondieron
+          </p>
         </div>
 
-        {isHost && (
-          <button className={styles.startBtn} style={{marginTop:'1.5rem'}} onClick={handleFinish}>
-            🏁 Mostrar resultados a todos
-          </button>
-        )}
-        {!isHost && (
-          <div className={styles.waitingDots} style={{marginTop:'1.5rem'}}>
-            <span /><span /><span />
+        <RankingTable currentPid={pid} players={players} />
+
+        {isHost ? (
+          <div className={styles.hostControls} style={{marginTop:'1.5rem'}}>
+            <p className={styles.hostBadge}>👑 Cuando estés listo, avanzá</p>
+            <button className={styles.startBtn} onClick={handleNext}>
+              {isLast ? '🏁 Mostrar resultados finales' : `▶ Siguiente pregunta (${qIndex+2}/${TOTAL_Q})`}
+            </button>
+          </div>
+        ) : (
+          <div style={{marginTop:'1.5rem', textAlign:'center'}}>
+            <p className={styles.waitingSub}>Esperando al profe para continuar…</p>
+            <div className={styles.waitingDots} style={{marginTop:'0.75rem', justifyContent:'center'}}>
+              <span /><span /><span />
+            </div>
           </div>
         )}
       </div>
@@ -314,11 +309,11 @@ function WaitingEnd({ playerName, totalScore, pid }) {
 // PANTALLA 6: RESULTADOS FINALES
 // ══════════════════════════════════════════════════════════════════════════════
 function ResultsScreen({ playerName, totalScore, pid, onRestart }) {
-  const { hostId } = useSession()
+  const { players, hostId } = useSession()
   const isHost = hostId === pid
 
   const handleRestart = async () => {
-    await set(sessionRef, { status: 'waiting', players: {}, hostId: pid })
+    await set(sessionRef, { status: 'waiting', players: {}, hostId: pid, currentQuestion: 0 })
     onRestart()
   }
 
@@ -328,11 +323,10 @@ function ResultsScreen({ playerName, totalScore, pid, onRestart }) {
         <div className={styles.resultsTrophy}>🏆</div>
         <h2 className={styles.resultsName}>{playerName}</h2>
         <p className={styles.resultsScore}>{totalScore} <span>pts</span></p>
-        <Leaderboard currentPid={pid} compact={false} />
+        <p className={styles.resultsMax}>Sesión {SESSION}</p>
+        <RankingTable currentPid={pid} players={players} title="Ranking final" />
         {isHost && (
-          <button className={styles.restartBtn} onClick={handleRestart}>
-            🔄 Nueva sesión
-          </button>
+          <button className={styles.restartBtn} onClick={handleRestart}>🔄 Nueva sesión</button>
         )}
       </div>
     </div>
@@ -343,41 +337,33 @@ function ResultsScreen({ playerName, totalScore, pid, onRestart }) {
 // APP PRINCIPAL
 // ══════════════════════════════════════════════════════════════════════════════
 export default function App() {
-  const [localScreen, setLocalScreen] = useState('login')  // login | waiting | quiz | feedback | waitingEnd
-  const [playerName, setPlayerName]   = useState('')
+  const [localScreen, setLocalScreen] = useState('login')
+  const [playerName,  setPlayerName]  = useState('')
   const [pid]                         = useState(makePlayerId)
-  const [qIndex, setQIndex]           = useState(0)
-  const [timeLeft, setTimeLeft]       = useState(TIMER_SECONDS)
-  const [selectedIndex, setSelected]  = useState(null)
-  const [pointsEarned, setPoints]     = useState(0)
-  const [totalScore, setTotalScore]   = useState(0)
+  const [qIndex,      setQIndex]      = useState(0)
+  const [timeLeft,    setTimeLeft]    = useState(TIMER_SECONDS)
+  const [selectedIdx, setSelectedIdx] = useState(null)
+  const [pointsEarned,setPoints]      = useState(0)
+  const [totalScore,  setTotalScore]  = useState(0)
   const timerRef = useRef(null)
 
   const { status } = useSession()
   const currentQ = QUESTIONS[qIndex]
 
-  // Reaccionar a cambios globales del estado de la sesión
+  // Reaccionar a cambios globales de estado
   useEffect(() => {
-    if (localScreen === 'login') return
-    if (status === 'playing' && localScreen === 'waiting') {
-      setLocalScreen('quiz')
-    }
-    if (status === 'finished' && (localScreen === 'quiz' || localScreen === 'feedback' || localScreen === 'waitingEnd')) {
-      setLocalScreen('results')
-    }
+    if (localScreen === 'login' || localScreen === 'waiting') return
+    if (status === 'playing'  && localScreen === 'waiting')  setLocalScreen('quiz')
+    if (status === 'finished' && localScreen !== 'results')  setLocalScreen('results')
   }, [status, localScreen])
 
-  // Timer de pregunta
+  // Timer
   useEffect(() => {
     if (localScreen !== 'quiz') return
     setTimeLeft(TIMER_SECONDS)
     timerRef.current = setInterval(() => {
       setTimeLeft(t => {
-        if (t <= 1) {
-          clearInterval(timerRef.current)
-          handleAnswer(null, 0)
-          return 0
-        }
+        if (t <= 1) { clearInterval(timerRef.current); handleAnswer(null, 0); return 0 }
         return t - 1
       })
     }, 1000)
@@ -391,37 +377,36 @@ export default function App() {
     let pts = 0
     if (correct) pts = 1000 + Math.round((remaining / TIMER_SECONDS) * 1000)
     const newTotal = totalScore + pts
-    setSelected(idx)
+    setSelectedIdx(idx)
     setPoints(pts)
     setTotalScore(newTotal)
-
     update(ref(db, `sessions/${SESSION}/players/${pid}`), {
-      score: newTotal,
-      question: qIndex + 1,
-      done: false,
+      score: newTotal, question: qIndex + 1, done: qIndex === TOTAL_Q - 1
     })
     setLocalScreen('feedback')
   }, [currentQ, totalScore, pid, qIndex])
 
-  const handleNext = () => {
-    const isLast = qIndex === TOTAL_Q - 1
-    if (isLast) {
-      update(ref(db, `sessions/${SESSION}/players/${pid}`), { done: true })
-      setLocalScreen('waitingEnd')
+  // Ir al ranking después del feedback
+  const handleShowRanking = () => setLocalScreen('ranking')
+
+  // Host (o alumno via useEffect en InterRanking) avanza a la siguiente pregunta
+  const handleNext = useCallback(() => {
+    if (qIndex === TOTAL_Q - 1) {
+      setLocalScreen('results')
     } else {
       setQIndex(i => i + 1)
-      setSelected(null)
+      setSelectedIdx(null)
       setLocalScreen('quiz')
     }
-  }
+  }, [qIndex])
 
   const handleJoin = async (name) => {
     setPlayerName(name)
-    // El primero en unirse se convierte en host automáticamente
     const snap = await new Promise(resolve => onValue(hostRef, resolve, { onlyOnce: true }))
     if (!snap.exists()) {
-      await set(hostRef, pid)
+      await set(hostRef,   pid)
       await set(statusRef, 'waiting')
+      await set(curQRef,   0)
     }
     await set(ref(db, `sessions/${SESSION}/players/${pid}`), {
       name, score: 0, question: 0, done: false
@@ -430,15 +415,11 @@ export default function App() {
   }
 
   const handleRestart = () => {
-    setLocalScreen('login')
-    setPlayerName('')
-    setQIndex(0)
-    setTotalScore(0)
-    setPoints(0)
-    setSelected(null)
+    setLocalScreen('login'); setPlayerName(''); setQIndex(0)
+    setTotalScore(0); setPoints(0); setSelectedIdx(null)
   }
 
-  // ── render ──────────────────────────────────────────────────────
+  // ── render ────────────────────────────────────────────────────────────────
   if (localScreen === 'login')
     return <LoginScreen onJoin={handleJoin} />
 
@@ -452,16 +433,22 @@ export default function App() {
     return (
       <FeedbackScreen
         question={currentQ}
-        selectedIndex={selectedIndex}
+        selectedIndex={selectedIdx}
         pointsEarned={pointsEarned}
         totalScore={totalScore}
-        onNext={handleNext}
-        isLast={qIndex === TOTAL_Q - 1}
+        onShowRanking={handleShowRanking}
       />
     )
 
-  if (localScreen === 'waitingEnd')
-    return <WaitingEnd playerName={playerName} totalScore={totalScore} pid={pid} />
+  if (localScreen === 'ranking')
+    return (
+      <InterRanking
+        pid={pid}
+        qIndex={qIndex}
+        totalScore={totalScore}
+        onNext={handleNext}
+      />
+    )
 
   if (localScreen === 'results')
     return (
