@@ -121,13 +121,18 @@ function LoginScreen({ onJoin }) {
 // PANTALLA 2: SALA DE ESPERA
 // ══════════════════════════════════════════════════════════════════════════════
 function WaitingRoom({ pid, onStart }) {
-  const { players, hostId } = useSession()
+  const { players, hostId, status } = useSession()
   const isHost = hostId === pid
+
+  // Todos (host y alumnos) transicionan cuando Firebase cambia a 'playing'
+  useEffect(() => {
+    if (status === 'playing') onStart()
+  }, [status])  // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleStart = async () => {
     await set(curQRef,   0)
     await set(statusRef, 'playing')
-    onStart()
+    // NO llamar onStart() acá — lo maneja el useEffect de arriba para todos
   }
   const handleReset = async () => {
     await set(sessionRef, { status: 'waiting', players: {}, hostId, currentQuestion: 0 })
@@ -350,11 +355,11 @@ export default function App() {
   const { status } = useSession()
   const currentQ = QUESTIONS[qIndex]
 
-  // Reaccionar a cambios globales de estado
+  // Forzar resultados si el profe termina el quiz mientras el alumno sigue jugando
   useEffect(() => {
-    if (localScreen === 'login') return
-    if (status === 'playing'  && localScreen === 'waiting')  setLocalScreen('quiz')
-    if (status === 'finished' && localScreen !== 'results')  setLocalScreen('results')
+    if (status === 'finished' && localScreen !== 'login' && localScreen !== 'results') {
+      setLocalScreen('results')
+    }
   }, [status, localScreen])
 
   // Timer
