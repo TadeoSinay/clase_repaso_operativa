@@ -19,6 +19,7 @@ const SESSION = todayKey()
 const sessionRef = ref(db, `sessions/${SESSION}`)
 const playersRef = ref(db, `sessions/${SESSION}/players`)
 const statusRef  = ref(db, `sessions/${SESSION}/status`)
+const hostRef    = ref(db, `sessions/${SESSION}/hostId`)
 
 const OPT_COLORS = [styles.optRed, styles.optBlue, styles.optYellow, styles.optGreen]
 const OPT_ICONS  = ['▲', '◆', '●', '♥']
@@ -28,6 +29,7 @@ const OPT_LABELS = ['A', 'B', 'C', 'D']
 function useSession() {
   const [status, setStatus]   = useState(null)   // 'waiting' | 'playing' | 'finished'
   const [players, setPlayers] = useState([])
+  const [hostId, setHostId]   = useState(null)
 
   useEffect(() => {
     const unsubStatus = onValue(statusRef, snap => {
@@ -39,10 +41,13 @@ function useSession() {
       list.sort((a, b) => b.score - a.score)
       setPlayers(list)
     })
-    return () => { unsubStatus(); unsubPlayers() }
+    const unsubHost = onValue(hostRef, snap => {
+      setHostId(snap.exists() ? snap.val() : null)
+    })
+    return () => { unsubStatus(); unsubPlayers(); unsubHost() }
   }, [])
 
-  return { status, players }
+  return { status, players, hostId }
 }
 
 // ── Leaderboard ───────────────────────────────────────────────────────────────
@@ -75,15 +80,14 @@ function Leaderboard({ currentPid, compact = false }) {
 // PANTALLA 1: LOGIN
 // ══════════════════════════════════════════════════════════════════════════════
 function LoginScreen({ onJoin }) {
-  const [name, setName]     = useState('')
-  const [isHost, setIsHost] = useState(false)
+  const [name, setName] = useState('')
   const inputRef = useRef()
   useEffect(() => inputRef.current?.focus(), [])
 
   const handleSubmit = e => {
     e.preventDefault()
     const trimmed = name.trim()
-    if (trimmed) onJoin(trimmed, isHost)
+    if (trimmed) onJoin(trimmed)
   }
 
   return (
@@ -104,14 +108,6 @@ function LoginScreen({ onJoin }) {
             onChange={e => setName(e.target.value)}
             maxLength={30}
           />
-          <label className={styles.hostToggle}>
-            <input
-              type="checkbox"
-              checked={isHost}
-              onChange={e => setIsHost(e.target.checked)}
-            />
-            <span>Soy el profe (control del quiz)</span>
-          </label>
           <button className={styles.joinBtn} type="submit" disabled={!name.trim()}>
             Unirme →
           </button>
@@ -125,8 +121,9 @@ function LoginScreen({ onJoin }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // PANTALLA 2: SALA DE ESPERA
 // ══════════════════════════════════════════════════════════════════════════════
-function WaitingRoom({ isHost, onStart }) {
-  const { players } = useSession()
+function WaitingRoom({ pid, onStart }) {
+  const { players, hostId } = useSession()
+  const isHost = hostId === pid
 
   const handleStart = async () => {
     await set(statusRef, 'playing')
@@ -134,7 +131,7 @@ function WaitingRoom({ isHost, onStart }) {
   }
 
   const handleReset = async () => {
-    await set(sessionRef, { status: 'waiting', players: {} })
+    await set(sessionRef, { status: 'waiting', players: {}, hostId })
   }
 
   return (
@@ -161,6 +158,7 @@ function WaitingRoom({ isHost, onStart }) {
 
         {isHost && (
           <div className={styles.hostControls}>
+            <p className={styles.hostBadge}>👑 Vos sos el profe — controlás el quiz</p>
             <button className={styles.startBtn} onClick={handleStart} disabled={players.length === 0}>
               ▶ Iniciar quiz ({players.length} jugadores)
             </button>
@@ -272,8 +270,9 @@ function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onN
 // ══════════════════════════════════════════════════════════════════════════════
 // PANTALLA 5: ESPERAR FIN (alumno terminó, espera al profe)
 // ══════════════════════════════════════════════════════════════════════════════
-function WaitingEnd({ playerName, totalScore, pid, isHost }) {
-  const { players } = useSession()
+function WaitingEnd({ playerName, totalScore, pid }) {
+  const { players, hostId } = useSession()
+  const isHost = hostId === pid
   const done = players.filter(p => p.done).length
 
   const handleFinish = async () => {
@@ -314,9 +313,12 @@ function WaitingEnd({ playerName, totalScore, pid, isHost }) {
 // ══════════════════════════════════════════════════════════════════════════════
 // PANTALLA 6: RESULTADOS FINALES
 // ══════════════════════════════════════════════════════════════════════════════
-function ResultsScreen({ playerName, totalScore, pid, isHost, onRestart }) {
+function ResultsScreen({ playerName, totalScore, pid, onRestart }) {
+  const { hostId } = useSession()
+  const isHost = hostId === pid
+
   const handleRestart = async () => {
-    await set(sessionRef, { status: 'waiting', players: {} })
+    await set(sessionRef, { status: 'waiting', players: {}, hostId: pid })
     onRestart()
   }
 
@@ -343,7 +345,6 @@ function ResultsScreen({ playerName, totalScore, pid, isHost, onRestart }) {
 export default function App() {
   const [localScreen, setLocalScreen] = useState('login')  // login | waiting | quiz | feedback | waitingEnd
   const [playerName, setPlayerName]   = useState('')
-  const [isHost, setIsHost]           = useState(false)
   const [pid]                         = useState(makePlayerId)
   const [qIndex, setQIndex]           = useState(0)
   const [timeLeft, setTimeLeft]       = useState(TIMER_SECONDS)
@@ -414,22 +415,23 @@ export default function App() {
     }
   }
 
-  const handleJoin = (name, host) => {
+  const handleJoin = async (name) => {
     setPlayerName(name)
-    setIsHost(host)
-    set(ref(db, `sessions/${SESSION}/players/${pid}`), {
+    // El primero en unirse se convierte en host automáticamente
+    const snap = await new Promise(resolve => onValue(hostRef, resolve, { onlyOnce: true }))
+    if (!snap.exists()) {
+      await set(hostRef, pid)
+      await set(statusRef, 'waiting')
+    }
+    await set(ref(db, `sessions/${SESSION}/players/${pid}`), {
       name, score: 0, question: 0, done: false
     })
-    if (!host && status === null) {
-      set(statusRef, 'waiting')
-    }
     setLocalScreen('waiting')
   }
 
   const handleRestart = () => {
     setLocalScreen('login')
     setPlayerName('')
-    setIsHost(false)
     setQIndex(0)
     setTotalScore(0)
     setPoints(0)
@@ -441,7 +443,7 @@ export default function App() {
     return <LoginScreen onJoin={handleJoin} />
 
   if (localScreen === 'waiting')
-    return <WaitingRoom isHost={isHost} onStart={() => setLocalScreen('quiz')} />
+    return <WaitingRoom pid={pid} onStart={() => setLocalScreen('quiz')} />
 
   if (localScreen === 'quiz')
     return <QuestionScreen question={currentQ} qIndex={qIndex} onAnswer={handleAnswer} timeLeft={timeLeft} />
@@ -459,7 +461,7 @@ export default function App() {
     )
 
   if (localScreen === 'waitingEnd')
-    return <WaitingEnd playerName={playerName} totalScore={totalScore} pid={pid} isHost={isHost} />
+    return <WaitingEnd playerName={playerName} totalScore={totalScore} pid={pid} />
 
   if (localScreen === 'results')
     return (
@@ -467,7 +469,6 @@ export default function App() {
         playerName={playerName}
         totalScore={totalScore}
         pid={pid}
-        isHost={isHost}
         onRestart={handleRestart}
       />
     )
