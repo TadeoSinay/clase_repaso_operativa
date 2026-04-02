@@ -352,7 +352,7 @@ export default function App() {
 
   // Reaccionar a cambios globales de estado
   useEffect(() => {
-    if (localScreen === 'login' || localScreen === 'waiting') return
+    if (localScreen === 'login') return
     if (status === 'playing'  && localScreen === 'waiting')  setLocalScreen('quiz')
     if (status === 'finished' && localScreen !== 'results')  setLocalScreen('results')
   }, [status, localScreen])
