@@ -1,106 +1,109 @@
 import { useRef, useCallback } from 'react'
+import * as Tone from 'tone'
 import TRACKS from './classicalTracks.js'
 
+// ── Salamander Grand Piano ────────────────────────────────────────────────────
+// Real piano recordings loaded once, shared across all hook instances.
+// Samples from the Tone.js / Salamander Grand Piano project (CC BY 3.0).
+let _sampler  = null
+let _reverb   = null
+let _ready    = false
+let _loading  = false
+
+const SAMPLE_BASE = 'https://tonejs.github.io/audio/salamander/'
+const SAMPLE_URLS = {
+  A0:'A0.mp3',  C1:'C1.mp3',  'D#1':'Ds1.mp3', 'F#1':'Fs1.mp3',
+  A1:'A1.mp3',  C2:'C2.mp3',  'D#2':'Ds2.mp3', 'F#2':'Fs2.mp3',
+  A2:'A2.mp3',  C3:'C3.mp3',  'D#3':'Ds3.mp3', 'F#3':'Fs3.mp3',
+  A3:'A3.mp3',  C4:'C4.mp3',  'D#4':'Ds4.mp3', 'F#4':'Fs4.mp3',
+  A4:'A4.mp3',  C5:'C5.mp3',  'D#5':'Ds5.mp3', 'F#5':'Fs5.mp3',
+  A5:'A5.mp3',  C6:'C6.mp3',  'D#6':'Ds6.mp3', 'F#6':'Fs6.mp3',
+  A6:'A6.mp3',  C7:'C7.mp3',
+}
+
+async function getSampler() {
+  if (_ready) return _sampler
+  if (_loading) {
+    // Wait until loaded
+    await new Promise(resolve => {
+      const poll = setInterval(() => { if (_ready) { clearInterval(poll); resolve() } }, 100)
+    })
+    return _sampler
+  }
+  _loading = true
+  await Tone.start()
+
+  // Concert-hall reverb
+  _reverb = new Tone.Reverb({ decay: 2.8, wet: 0.30 })
+  await _reverb.generate()
+
+  // Soft limiter to prevent clipping
+  const limiter = new Tone.Limiter(-3)
+  limiter.connect(_reverb)
+  _reverb.toDestination()
+
+  await new Promise(resolve => {
+    _sampler = new Tone.Sampler({
+      urls: SAMPLE_URLS,
+      baseUrl: SAMPLE_BASE,
+      onload: () => { _ready = true; resolve() },
+    }).connect(limiter)
+  })
+
+  return _sampler
+}
+
+// ── Hook ──────────────────────────────────────────────────────────────────────
 export function useAmbientMusic() {
-  const ctxRef      = useRef(null)
-  const masterRef   = useRef(null)
   const timerRef    = useRef(null)
   const started     = useRef(false)
+  const stopped     = useRef(false)
   const shuffledRef = useRef(null)
   const idxRef      = useRef(0)
 
-  /** Plays a single note with piano-like envelope */
-  const playNote = (ac, master, freq, startTime, dur) => {
-    if (freq === 0) return
-
-    const osc  = ac.createOscillator()
-    const gain = ac.createGain()
-    osc.type = 'triangle'
-    osc.frequency.value = freq
-    gain.gain.setValueAtTime(0, startTime)
-    gain.gain.linearRampToValueAtTime(0.20, startTime + 0.008)
-    gain.gain.exponentialRampToValueAtTime(0.11, startTime + dur * 0.4)
-    gain.gain.exponentialRampToValueAtTime(0.001, startTime + dur * 0.95)
-    osc.connect(gain)
-    gain.connect(master)
-    osc.start(startTime)
-    osc.stop(startTime + dur + 0.05)
-
-    // Soft harmonic for richer timbre
-    if (freq < 600) {
-      const osc2  = ac.createOscillator()
-      const gain2 = ac.createGain()
-      osc2.type = 'sine'
-      osc2.frequency.value = freq * 2
-      gain2.gain.setValueAtTime(0, startTime)
-      gain2.gain.linearRampToValueAtTime(0.055, startTime + 0.01)
-      gain2.gain.exponentialRampToValueAtTime(0.001, startTime + dur * 0.8)
-      osc2.connect(gain2)
-      gain2.connect(master)
-      osc2.start(startTime)
-      osc2.stop(startTime + dur + 0.05)
-    }
-  }
-
-  /** Schedules all notes of a track and returns total duration in seconds */
-  const scheduleTrack = (ac, master, startTime, notes) => {
-    let t = startTime
-    for (const [freq, dur] of notes) {
-      playNote(ac, master, freq, t, dur)
-      t += dur
-    }
-    return t - startTime
-  }
-
-  /** Plays the next track in the shuffled list, then schedules the one after */
-  const playNext = useCallback(() => {
-    const ac     = ctxRef.current
-    const master = masterRef.current
-    if (!ac || !master) return
+  const playNext = useCallback(async () => {
+    if (stopped.current) return
+    let sampler
+    try {
+      sampler = await getSampler()
+    } catch { return }
+    if (stopped.current || !sampler) return
 
     const tracks = shuffledRef.current
     const idx    = idxRef.current % tracks.length
     const track  = tracks[idx]
     idxRef.current = idx + 1
 
-    const startTime = ac.currentTime + 0.15
-    const dur       = scheduleTrack(ac, master, startTime, track.notes)
+    // Schedule all notes of this track
+    const now = Tone.now() + 0.15
+    let t = 0
+    for (const [freq, dur] of track.notes) {
+      if (freq > 0) {
+        // Slight velocity variation → natural, humanised feel
+        const vel = 0.50 + Math.random() * 0.22
+        sampler.triggerAttackRelease(freq, Math.max(0.06, dur * 0.90), now + t, vel)
+      }
+      t += dur
+    }
 
-    // Schedule next track when this one ends (+ small gap)
-    timerRef.current = setTimeout(playNext, (dur + 0.3) * 1000)
+    // When this track ends, play the next one
+    timerRef.current = setTimeout(() => { if (!stopped.current) playNext() }, (t + 0.5) * 1000)
   }, [])
 
   const start = useCallback(() => {
     if (started.current) return
-    try {
-      const AC = window.AudioContext || window.webkitAudioContext
-      if (!AC) return
-
-      const ac = new AC()
-      ctxRef.current = ac
-
-      // Shuffle track order
-      shuffledRef.current = [...TRACKS].sort(() => Math.random() - 0.5)
-      idxRef.current = 0
-
-      const master = ac.createGain()
-      master.gain.value = 0.80
-      master.connect(ac.destination)
-      masterRef.current = master
-
-      playNext()
-      started.current = true
-    } catch (_) {
-      // AudioContext unavailable — silent failure
-    }
+    started.current = true
+    stopped.current = false
+    shuffledRef.current = [...TRACKS].sort(() => Math.random() - 0.5)
+    idxRef.current = 0
+    playNext()
   }, [playNext])
 
   const stop = useCallback(() => {
+    stopped.current  = true
+    started.current  = false
     clearTimeout(timerRef.current)
-    try { ctxRef.current?.close() } catch (_) {}
-    ctxRef.current  = null
-    masterRef.current = null
-    started.current = false
+    try { _sampler?.releaseAll() } catch (_) {}
   }, [])
 
   return { start, stop }
