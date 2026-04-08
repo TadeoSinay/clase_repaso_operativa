@@ -112,39 +112,54 @@ function UTNLogo() {
 }
 
 // ── ranking table ─────────────────────────────────────────────────────────────
+const TOP_N = 10
+
 function RankingTable({ players, title, deltas = {} }) {
+  const myRank = players.findIndex(p => p.id === MY_PID)
+  const top    = players.slice(0, TOP_N)
+  const meOutside = myRank >= TOP_N  // am I outside the top-10?
+
+  const renderRow = (p, i, opts = {}) => {
+    const delta = deltas[p.id]
+    return (
+      <tr
+        key={p.id}
+        className={`${p.id === MY_PID ? styles.lbMe : ''} ${styles.lbRow}`}
+        style={opts.delay != null ? { animationDelay: `${opts.delay}ms` } : {}}
+      >
+        <td className={styles.lbRank}>
+          {i===0?'🥇':i===1?'🥈':i===2?'🥉':<span>{i+1}</span>}
+        </td>
+        <td>
+          <span className={styles.lbEmoji}>{p.emoji}</span>
+          <span className={styles.lbName}>{p.name}{p.id===MY_PID?' (vos)':''}</span>
+          {delta > 0 && <span className={styles.rankUp}> ↑{delta}</span>}
+          {delta < 0 && <span className={styles.rankDown}> ↓{Math.abs(delta)}</span>}
+        </td>
+        <td className={styles.lbScore}>{p.score.toLocaleString()}</td>
+        <td className={styles.lbProg}>{p.done ? '✅' : `${p.question??0}/${TOTAL_Q}`}</td>
+      </tr>
+    )
+  }
+
   return (
     <div className={styles.lbFull}>
       {title && <h3 className={styles.lbTitle}>{title}</h3>}
       <table className={styles.lbTable}>
         <thead><tr><th>#</th><th>Jugador</th><th>Puntaje</th><th>Progreso</th></tr></thead>
         <tbody>
-          {players.map((p, i) => {
-            const delta = deltas[p.id]
-            return (
-              <tr
-                key={p.id}
-                className={`${p.id === MY_PID ? styles.lbMe : ''} ${styles.lbRow}`}
-                style={{ animationDelay: `${i * 60}ms` }}
-              >
-                <td className={styles.lbRank}>
-                  {i===0?'🥇':i===1?'🥈':i===2?'🥉':<span>{i+1}</span>}
-                </td>
-                <td>
-                  <span className={styles.lbEmoji}>{p.emoji}</span>
-                  <span className={styles.lbName}>{p.name}{p.id===MY_PID?' (vos)':''}</span>
-                  {delta > 0 && <span className={styles.rankUp}> ↑{delta}</span>}
-                  {delta < 0 && <span className={styles.rankDown}> ↓{Math.abs(delta)}</span>}
-                </td>
-                <td className={styles.lbScore}>{p.score.toLocaleString()}</td>
-                <td className={styles.lbProg}>
-                  {p.done ? '✅' : `${p.question??0}/${TOTAL_Q}`}
-                </td>
-              </tr>
-            )
-          })}
+          {top.map((p, i) => renderRow(p, i, { delay: i * 50 }))}
+          {meOutside && (
+            <>
+              <tr className={styles.lbSep}><td colSpan={4}>· · ·</td></tr>
+              {renderRow(players[myRank], myRank)}
+            </>
+          )}
         </tbody>
       </table>
+      {players.length > TOP_N && (
+        <p className={styles.lbCount}>{players.length} jugadores en total</p>
+      )}
     </div>
   )
 }
