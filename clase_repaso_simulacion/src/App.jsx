@@ -543,16 +543,46 @@ export default function App() {
   const handleJoin = async (name) => {
     music.start()
     setPlayerName(name)
-    const snap = await new Promise(resolve => onValue(hostRef, resolve, { onlyOnce: true }))
-    if (!snap.exists()) {
+
+    // Claim host if session is fresh
+    const hostSnap = await new Promise(r => onValue(hostRef, r, { onlyOnce: true }))
+    if (!hostSnap.exists()) {
       await set(hostRef, MY_PID)
       await set(statusRef, 'waiting')
       await set(curQRef, 0)
     }
+
+    // Read session state and any previous player data (reconnection)
+    const [statusSnap, curQSnap, mySnap] = await Promise.all([
+      new Promise(r => onValue(statusRef, r, { onlyOnce: true })),
+      new Promise(r => onValue(curQRef, r, { onlyOnce: true })),
+      new Promise(r => onValue(ref(db, `sessions/${SESSION}/players/${MY_PID}`), r, { onlyOnce: true })),
+    ])
+
+    const sessionStatus = statusSnap.val() || 'waiting'
+    const currentQ      = Math.min(curQSnap.val() ?? 0, TOTAL_Q - 1)
+    const prevData      = mySnap.exists() ? mySnap.val() : null
+    const prevScore     = prevData?.score ?? 0
+
+    // Register / re-register player (catch up to current question)
     await set(ref(db, `sessions/${SESSION}/players/${MY_PID}`), {
-      name, emoji: MY_ANIMAL, score: 0, question: 0, done: false
+      name, emoji: MY_ANIMAL,
+      score:    prevScore,
+      question: sessionStatus === 'waiting' ? 0 : currentQ,
+      done:     sessionStatus === 'finished',
     })
-    setScreen('waiting')
+
+    if (sessionStatus === 'playing') {
+      // Reconnect mid-game: jump to current question, restore score
+      setQIndex(currentQ)
+      setTotal(prevScore)
+      setScreen('question')
+    } else if (sessionStatus === 'finished') {
+      setTotal(prevScore)
+      setScreen('results')
+    } else {
+      setScreen('waiting')
+    }
   }
 
   const handleRestart = () => {

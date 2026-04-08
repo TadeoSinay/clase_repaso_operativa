@@ -2,16 +2,10 @@ import { useRef, useCallback } from 'react'
 import * as Tone from 'tone'
 import TRACKS from './classicalTracks.js'
 
-// ── Salamander Grand Piano ────────────────────────────────────────────────────
-// Real piano recordings loaded once, shared across all hook instances.
-// Samples from the Tone.js / Salamander Grand Piano project (CC BY 3.0).
-let _sampler  = null
-let _reverb   = null
-let _ready    = false
-let _loading  = false
+// ── Audio engine — created once on first user gesture ─────────────────────────
+let _engine = null
 
-const SAMPLE_BASE = 'https://tonejs.github.io/audio/salamander/'
-const SAMPLE_URLS = {
+const PIANO_URLS = {
   A0:'A0.mp3',  C1:'C1.mp3',  'D#1':'Ds1.mp3', 'F#1':'Fs1.mp3',
   A1:'A1.mp3',  C2:'C2.mp3',  'D#2':'Ds2.mp3', 'F#2':'Fs2.mp3',
   A2:'A2.mp3',  C3:'C3.mp3',  'D#3':'Ds3.mp3', 'F#3':'Fs3.mp3',
@@ -21,89 +15,124 @@ const SAMPLE_URLS = {
   A6:'A6.mp3',  C7:'C7.mp3',
 }
 
-async function getSampler() {
-  if (_ready) return _sampler
-  if (_loading) {
-    // Wait until loaded
-    await new Promise(resolve => {
-      const poll = setInterval(() => { if (_ready) { clearInterval(poll); resolve() } }, 100)
+async function buildEngine() {
+  if (_engine?.ready) return _engine
+  if (_engine?.loading) {
+    await new Promise(r => {
+      const t = setInterval(() => { if (_engine?.ready) { clearInterval(t); r() } }, 80)
     })
-    return _sampler
+    return _engine
   }
-  _loading = true
+
+  _engine = { loading: true, ready: false }
   await Tone.start()
 
-  // Concert-hall reverb
-  _reverb = new Tone.Reverb({ decay: 2.8, wet: 0.30 })
-  await _reverb.generate()
+  // Shared hall reverb + limiter
+  const reverb  = new Tone.Reverb({ decay: 2.6, wet: 0.30 })
+  await reverb.generate()
+  const limiter = new Tone.Limiter(-2).toDestination()
+  reverb.connect(limiter)
 
-  // Soft limiter to prevent clipping
-  const limiter = new Tone.Limiter(-3)
-  limiter.connect(_reverb)
-  _reverb.toDestination()
+  // ── Instrument definitions ──────────────────────────────────────────────────
 
-  await new Promise(resolve => {
-    _sampler = new Tone.Sampler({
-      urls: SAMPLE_URLS,
-      baseUrl: SAMPLE_BASE,
-      onload: () => { _ready = true; resolve() },
-    }).connect(limiter)
+  // Real grand piano (Salamander samples)
+  const piano = await new Promise(resolve => {
+    const s = new Tone.Sampler({
+      urls: PIANO_URLS,
+      baseUrl: 'https://tonejs.github.io/audio/salamander/',
+      onload: () => resolve(s),
+    }).connect(reverb)
   })
 
-  return _sampler
+  // Orchestral strings — warm triangle wave, slow attack
+  const strings = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'triangle' },
+    envelope: { attack: 0.15, decay: 0.5, sustain: 0.80, release: 1.8 },
+    volume: -9,
+  }).connect(reverb)
+
+  // Brass section — sawtooth, punchy attack
+  const brass = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'sawtooth', partialCount: 4 },
+    envelope: { attack: 0.05, decay: 0.3, sustain: 0.70, release: 0.6 },
+    volume: -11,
+  }).connect(reverb)
+
+  // Flute — pure sine, soft and breathy
+  const flute = new Tone.Synth({
+    oscillator: { type: 'sine' },
+    envelope: { attack: 0.10, decay: 0.10, sustain: 0.90, release: 0.8 },
+    volume: -6,
+  }).connect(reverb)
+
+  // Pipe organ — square wave, instant attack, full sustain
+  const organ = new Tone.PolySynth(Tone.Synth, {
+    oscillator: { type: 'square', partialCount: 2 },
+    envelope: { attack: 0.02, decay: 0.05, sustain: 0.95, release: 0.4 },
+    volume: -13,
+  }).connect(reverb)
+
+  _engine = {
+    ready: true,
+    inst: { piano, strings, brass, flute, organ },
+  }
+  return _engine
 }
 
 // ── Hook ──────────────────────────────────────────────────────────────────────
 export function useAmbientMusic() {
-  const timerRef    = useRef(null)
-  const started     = useRef(false)
-  const stopped     = useRef(false)
-  const shuffledRef = useRef(null)
-  const idxRef      = useRef(0)
+  const timerRef = useRef(null)
+  const started  = useRef(false)
+  const stopped  = useRef(false)
+  const idxRef   = useRef(0)
 
   const playNext = useCallback(async () => {
     if (stopped.current) return
-    let sampler
-    try {
-      sampler = await getSampler()
-    } catch { return }
-    if (stopped.current || !sampler) return
+    let eng
+    try { eng = await buildEngine() } catch { return }
+    if (stopped.current) return
 
-    const tracks = shuffledRef.current
-    const idx    = idxRef.current % tracks.length
-    const track  = tracks[idx]
-    idxRef.current = idx + 1
+    // First pass: play in defined order (upbeat → mellow).
+    // After cycling through all tracks: shuffle for variety.
+    const raw = idxRef.current
+    if (raw > 0 && raw % TRACKS.length === 0) {
+      // Reshuffle for subsequent cycles
+      TRACKS.sort(() => Math.random() - 0.5)
+    }
+    const track = TRACKS[raw % TRACKS.length]
+    idxRef.current = raw + 1
 
-    // Schedule all notes of this track
-    const now = Tone.now() + 0.15
+    const synth = eng.inst[track.instrument] ?? eng.inst.piano
+    const now   = Tone.now() + 0.15
     let t = 0
+
     for (const [freq, dur] of track.notes) {
       if (freq > 0) {
-        // Slight velocity variation → natural, humanised feel
-        const vel = 0.50 + Math.random() * 0.22
-        sampler.triggerAttackRelease(freq, Math.max(0.06, dur * 0.90), now + t, vel)
+        const vel = 0.46 + Math.random() * 0.26   // humanised velocity
+        synth.triggerAttackRelease(freq, Math.max(0.05, dur * 0.88), now + t, vel)
       }
       t += dur
     }
 
-    // When this track ends, play the next one
-    timerRef.current = setTimeout(() => { if (!stopped.current) playNext() }, (t + 0.5) * 1000)
+    timerRef.current = setTimeout(
+      () => { if (!stopped.current) playNext() },
+      (t + 0.5) * 1000
+    )
   }, [])
 
   const start = useCallback(() => {
     if (started.current) return
     started.current = true
     stopped.current = false
-    shuffledRef.current = [...TRACKS].sort(() => Math.random() - 0.5)
-    idxRef.current = 0
+    idxRef.current  = 0
     playNext()
   }, [playNext])
 
   const stop = useCallback(() => {
-    stopped.current  = true
-    started.current  = false
+    stopped.current = true
+    started.current = false
     clearTimeout(timerRef.current)
-    try { _sampler?.releaseAll() } catch (_) {}
+    try { _engine?.inst?.piano?.releaseAll() } catch (_) {}
   }, [])
 
   return { start, stop }
