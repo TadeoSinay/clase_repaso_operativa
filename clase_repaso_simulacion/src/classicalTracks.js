@@ -45,11 +45,11 @@ const TRACKS = [
   {
     title: '5ª Sinfonía – Beethoven',
     notes: [
-      [R,E],[G4,E],[G4,E],[G4,E],[Ef4,H+E],
+      [R,E],[G4,E],[G4,E],[G4,E],[Ds4,H+E],
       [R,E],[F4,E],[F4,E],[F4,E],[D4,H+E],
-      [R,E],[Ef4,E],[Ef4,E],[Ef4,E],[C4,Q],
+      [R,E],[Ds4,E],[Ds4,E],[Ds4,E],[C4,Q],
       [G3,E],[G3,E],[G4,H+E],
-      [R,E],[G4,E],[G4,E],[G4,E],[Ef4,H+E],
+      [R,E],[G4,E],[G4,E],[G4,E],[Ds4,H+E],
       [R,E],[F4,E],[F4,E],[F4,E],[D4,H+Q],
     ]
   },
