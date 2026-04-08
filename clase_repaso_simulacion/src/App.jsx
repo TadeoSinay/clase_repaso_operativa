@@ -4,11 +4,13 @@ import confetti from 'canvas-confetti'
 import { db } from './firebase.js'
 import QUESTIONS from './questions.js'
 import { useAmbientMusic } from './useAmbientMusic.js'
+import Background3D from './Background3D.jsx'
 import styles from './App.module.css'
 
 // ── constants ─────────────────────────────────────────────────────────────────
 const TIMER_SECONDS = 20
 const TOTAL_Q       = QUESTIONS.length
+const WRONG_PEN     = -500   // points deducted for wrong answer
 
 const ANIMALS = ['🐶','🐱','🦊','🐭','🐰','🐻','🐼','🐨','🐯','🦁',
                  '🐮','🐷','🐸','🐵','🐧','🦆','🦉','🦄','🐝','🦋',
@@ -81,15 +83,21 @@ function UTNLogo() {
         <circle cx="22" cy="22" r="13"   stroke="#c8102e" strokeWidth="1"   fill="none"/>
         <circle cx="22" cy="22" r="2.8"  fill="#c8102e"/>
         {spokes.map(deg => {
-          const r = deg * Math.PI / 180
+          const rad = deg * Math.PI / 180
+          const cos = Math.cos(rad)
+          const sin = Math.sin(rad)
+          // Spoke: inner ring → outer ring
+          const x1 = 22 + cos * 5.5,  y1 = 22 + sin * 5.5
+          const x2 = 22 + cos * 12.5, y2 = 22 + sin * 12.5
+          // Crossbar at outer end (perpendicular, "T" shape)
+          const cx1 = x2 - sin * 2.8, cy1 = y2 + cos * 2.8
+          const cx2 = x2 + sin * 2.8, cy2 = y2 - cos * 2.8
           return (
             <g key={deg}>
-              <line
-                x1={22 + Math.cos(r)*5.5} y1={22 + Math.sin(r)*5.5}
-                x2={22 + Math.cos(r)*12}  y2={22 + Math.sin(r)*12}
-                stroke="#c8102e" strokeWidth="1.6" strokeLinecap="round"
-              />
-              <circle cx={22 + Math.cos(r)*12} cy={22 + Math.sin(r)*12} r="1.4" fill="#c8102e"/>
+              <line x1={x1} y1={y1} x2={x2} y2={y2}
+                stroke="#c8102e" strokeWidth="1.5" strokeLinecap="round"/>
+              <line x1={cx1} y1={cy1} x2={cx2} y2={cy2}
+                stroke="#c8102e" strokeWidth="1.5" strokeLinecap="round"/>
             </g>
           )
         })}
@@ -104,32 +112,37 @@ function UTNLogo() {
 }
 
 // ── ranking table ─────────────────────────────────────────────────────────────
-function RankingTable({ players, title }) {
+function RankingTable({ players, title, deltas = {} }) {
   return (
     <div className={styles.lbFull}>
       {title && <h3 className={styles.lbTitle}>{title}</h3>}
       <table className={styles.lbTable}>
         <thead><tr><th>#</th><th>Jugador</th><th>Puntaje</th><th>Progreso</th></tr></thead>
         <tbody>
-          {players.map((p, i) => (
-            <tr
-              key={p.id}
-              className={`${p.id === MY_PID ? styles.lbMe : ''} ${styles.lbRow}`}
-              style={{ animationDelay: `${i * 60}ms` }}
-            >
-              <td className={styles.lbRank}>
-                {i===0?'🥇':i===1?'🥈':i===2?'🥉':<span>{i+1}</span>}
-              </td>
-              <td>
-                <span className={styles.lbEmoji}>{p.emoji}</span>
-                <span className={styles.lbName}>{p.name}{p.id===MY_PID?' (vos)':''}</span>
-              </td>
-              <td className={styles.lbScore}>{p.score.toLocaleString()}</td>
-              <td className={styles.lbProg}>
-                {p.done ? '✅' : `${p.question??0}/${TOTAL_Q}`}
-              </td>
-            </tr>
-          ))}
+          {players.map((p, i) => {
+            const delta = deltas[p.id]
+            return (
+              <tr
+                key={p.id}
+                className={`${p.id === MY_PID ? styles.lbMe : ''} ${styles.lbRow}`}
+                style={{ animationDelay: `${i * 60}ms` }}
+              >
+                <td className={styles.lbRank}>
+                  {i===0?'🥇':i===1?'🥈':i===2?'🥉':<span>{i+1}</span>}
+                </td>
+                <td>
+                  <span className={styles.lbEmoji}>{p.emoji}</span>
+                  <span className={styles.lbName}>{p.name}{p.id===MY_PID?' (vos)':''}</span>
+                  {delta > 0 && <span className={styles.rankUp}> ↑{delta}</span>}
+                  {delta < 0 && <span className={styles.rankDown}> ↓{Math.abs(delta)}</span>}
+                </td>
+                <td className={styles.lbScore}>{p.score.toLocaleString()}</td>
+                <td className={styles.lbProg}>
+                  {p.done ? '✅' : `${p.question??0}/${TOTAL_Q}`}
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>
@@ -210,7 +223,6 @@ function WaitingRoom({ onStart }) {
           {players.length} jugador{players.length!==1?'es':''} conectado{players.length!==1?'s':''}
         </p>
 
-        {/* Animal grid — slots fill as players join */}
         <div className={styles.animalGrid}>
           {players.map((p, i) => (
             <div key={p.id} className={`${styles.animalSlot} ${styles.animalIn}`} style={{animationDelay:`${i*40}ms`}}>
@@ -218,7 +230,6 @@ function WaitingRoom({ onStart }) {
               <span className={styles.animalName}>{p.name}</span>
             </div>
           ))}
-          {/* Empty placeholder slots */}
           {Array.from({length: Math.max(0, 8 - players.length)}).map((_, i) => (
             <div key={`empty-${i}`} className={styles.animalSlotEmpty}/>
           ))}
@@ -249,7 +260,6 @@ function QuestionScreen({ question, qIndex, onAnswer, timeLeft, onForceAdvance }
   const progress = timeLeft / TIMER_SECONDS
   const danger   = timeLeft <= 5
 
-  // Host advanced before player answered — force skip
   useEffect(() => {
     if (curQ > qIndex) onForceAdvance()
   }, [curQ]) // eslint-disable-line
@@ -262,7 +272,6 @@ function QuestionScreen({ question, qIndex, onAnswer, timeLeft, onForceAdvance }
 
   return (
     <div className={styles.screen}>
-      {/* Progress bar — full width at top */}
       <div className={styles.progressBar}>
         <div
           className={`${styles.progressFill} ${danger ? styles.progressDanger : ''}`}
@@ -305,7 +314,6 @@ function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onS
   const timedOut  = selectedIndex === null || forced
   const { curQ } = useSession()
 
-  // If host skips while reading feedback, auto-advance
   useEffect(() => {
     if (curQ > question._idx) onShowRanking()
   }, [curQ]) // eslint-disable-line
@@ -313,6 +321,9 @@ function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onS
   useEffect(() => {
     if (isCorrect) confetti({ particleCount: 100, spread: 80, origin:{y:0.6} })
   }, [isCorrect])
+
+  const ptsSign  = pointsEarned > 0 ? '+' : ''
+  const ptsClass = pointsEarned < 0 ? styles.pointsNeg : styles.pointsEarned
 
   return (
     <div className={`${styles.screen} ${styles.screenFeedback} ${isCorrect ? styles.bgCorrect : styles.bgWrong}`}>
@@ -331,7 +342,7 @@ function FeedbackScreen({ question, selectedIndex, pointsEarned, totalScore, onS
           <p>{question.explanation}</p>
         </div>
         <div className={styles.pointsRow}>
-          <span className={styles.pointsEarned}>+{pointsEarned} pts</span>
+          <span className={ptsClass}>{ptsSign}{pointsEarned} pts</span>
           <span className={styles.totalScore}>Total: {totalScore.toLocaleString()} pts</span>
         </div>
         <button className={styles.nextBtn} onClick={onShowRanking}>
@@ -351,12 +362,27 @@ function InterRanking({ qIndex, onNext }) {
   const isLast   = qIndex === TOTAL_Q - 1
   const answered = players.filter(p => (p.question ?? 0) > qIndex).length
 
-  // Students auto-advance when host sets curQ
+  // Capture initial rank snapshot when this component mounts
+  const initRanksRef = useRef(null)
+  useEffect(() => {
+    if (initRanksRef.current === null && players.length > 0) {
+      initRanksRef.current = Object.fromEntries(players.map((p, i) => [p.id, i + 1]))
+    }
+  }, [players])
+
+  // Calculate rank movements vs snapshot
+  const rankDeltas = {}
+  if (initRanksRef.current) {
+    players.forEach((p, i) => {
+      const prev = initRanksRef.current[p.id]
+      if (prev != null) rankDeltas[p.id] = prev - (i + 1)  // positive = moved up
+    })
+  }
+
   useEffect(() => {
     if (!isHost && curQ > qIndex) onNext()
   }, [curQ]) // eslint-disable-line
 
-  // Force results if host ends the session
   useEffect(() => {
     if (status === 'finished') onNext()
   }, [status]) // eslint-disable-line
@@ -378,7 +404,7 @@ function InterRanking({ qIndex, onNext }) {
           <p className={styles.rankingAnswered}>{answered}/{players.length} respondieron</p>
         </div>
 
-        <RankingTable players={players} />
+        <RankingTable players={players} deltas={rankDeltas} />
 
         {isHost ? (
           <div className={styles.hostControls} style={{marginTop:'1.5rem'}}>
@@ -471,8 +497,15 @@ export default function App() {
   const handleAnswer = useCallback((idx, remaining) => {
     clearInterval(timerRef.current)
     const correct = idx !== null && idx === currentQ.correct
-    const pts = correct ? 1000 + Math.round((remaining / TIMER_SECONDS) * 1000) : 0
-    const newTotal = total + pts
+    let pts
+    if (idx === null) {
+      pts = 0                                                          // timeout → no change
+    } else if (correct) {
+      pts = 1000 + Math.round((remaining / TIMER_SECONDS) * 1000)    // correct → speed bonus
+    } else {
+      pts = WRONG_PEN                                                  // wrong → penalty
+    }
+    const newTotal = Math.max(0, total + pts)
     setSelIdx(idx)
     setPoints(pts)
     setTotal(newTotal)
@@ -485,9 +518,8 @@ export default function App() {
 
   const handleForceAdvance = useCallback(() => {
     clearInterval(timerRef.current)
-    const newTotal = total  // 0 pts for this question
     update(ref(db, `sessions/${SESSION}/players/${MY_PID}`), {
-      score: newTotal, question: qIndex + 1, done: qIndex === TOTAL_Q - 1
+      score: total, question: qIndex + 1, done: qIndex === TOTAL_Q - 1
     })
     setSelIdx(null)
     setPoints(0)
@@ -509,7 +541,7 @@ export default function App() {
   }, [qIndex])
 
   const handleJoin = async (name) => {
-    music.start()   // Start music on first user gesture
+    music.start()
     setPlayerName(name)
     const snap = await new Promise(resolve => onValue(hostRef, resolve, { onlyOnce: true }))
     if (!snap.exists()) {
@@ -529,44 +561,44 @@ export default function App() {
   }
 
   // ── render ────────────────────────────────────────────────────────────────
-  if (screen === 'login')
-    return <LoginScreen onJoin={handleJoin} />
+  return (
+    <>
+      <Background3D />
 
-  if (screen === 'waiting')
-    return <WaitingRoom onStart={() => setScreen('question')} />
+      {screen === 'login' && <LoginScreen onJoin={handleJoin} />}
 
-  if (screen === 'question')
-    return (
-      <QuestionScreen
-        question={currentQ}
-        qIndex={qIndex}
-        onAnswer={handleAnswer}
-        timeLeft={timeLeft}
-        onForceAdvance={handleForceAdvance}
-      />
-    )
+      {screen === 'waiting' && <WaitingRoom onStart={() => setScreen('question')} />}
 
-  if (screen === 'feedback')
-    return (
-      <FeedbackScreen
-        question={currentQ}
-        selectedIndex={selIdx}
-        pointsEarned={points}
-        totalScore={total}
-        onShowRanking={handleShowRanking}
-        forced={forced}
-      />
-    )
+      {screen === 'question' && (
+        <QuestionScreen
+          question={currentQ}
+          qIndex={qIndex}
+          onAnswer={handleAnswer}
+          timeLeft={timeLeft}
+          onForceAdvance={handleForceAdvance}
+        />
+      )}
 
-  if (screen === 'ranking')
-    return <InterRanking qIndex={qIndex} onNext={handleNext} />
+      {screen === 'feedback' && (
+        <FeedbackScreen
+          question={currentQ}
+          selectedIndex={selIdx}
+          pointsEarned={points}
+          totalScore={total}
+          onShowRanking={handleShowRanking}
+          forced={forced}
+        />
+      )}
 
-  if (screen === 'results')
-    return (
-      <ResultsScreen
-        playerName={playerName}
-        totalScore={total}
-        onRestart={handleRestart}
-      />
-    )
+      {screen === 'ranking' && <InterRanking qIndex={qIndex} onNext={handleNext} />}
+
+      {screen === 'results' && (
+        <ResultsScreen
+          playerName={playerName}
+          totalScore={total}
+          onRestart={handleRestart}
+        />
+      )}
+    </>
+  )
 }

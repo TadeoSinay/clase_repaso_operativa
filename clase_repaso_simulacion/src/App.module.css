@@ -14,21 +14,32 @@
   --text:        #f0f4ff;
   --muted:       rgba(240,244,255,0.55);
   --faint:       rgba(240,244,255,0.25);
-  font-family: 'Inter', sans-serif;
+  font-family: 'Space Grotesk', sans-serif;
   color: var(--text);
 }
 body { background: var(--bg); min-height: 100vh; }
 #root { min-height: 100vh; display: flex; flex-direction: column; }
 
+/* ── 3D canvas background ────────────────────────────────────────────────── */
+.bg3d {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
 /* ── screen wrapper ──────────────────────────────────────────────────────── */
 .screen {
+  position: relative;
+  z-index: 1;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 1.25rem 1rem;
-  background: var(--bg);
+  background: transparent;
   animation: fadeIn 0.3s ease;
 }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -305,8 +316,8 @@ body { background: var(--bg); min-height: 100vh; }
 
 /* ── feedback ────────────────────────────────────────────────────────────── */
 .screenFeedback { justify-content: flex-start; padding-top: 2.5rem; }
-.bgCorrect { background: #052e16; }
-.bgWrong   { background: #1a0505; }
+.bgCorrect { background: rgba(5,46,22,0.92); }
+.bgWrong   { background: rgba(26,5,5,0.92); }
 .feedbackCard {
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(255,255,255,0.1);
@@ -437,6 +448,13 @@ body { background: var(--bg); min-height: 100vh; }
   transition: background 0.2s, transform 0.15s;
 }
 .restartBtn:hover { background: rgba(124,58,237,0.4); transform: translateY(-1px); }
+
+/* ── rank movement indicators ────────────────────────────────────────────── */
+.rankUp   { color: #86efac; font-weight: 700; font-size: 0.78rem; margin-left: 0.3rem; }
+.rankDown { color: #fca5a5; font-weight: 700; font-size: 0.78rem; margin-left: 0.3rem; }
+
+/* ── negative points (wrong answer penalty) ──────────────────────────────── */
+.pointsNeg { font-family:'Space Grotesk',sans-serif; font-size:1.6rem; font-weight:700; color:#fca5a5; }
 
 /* ── responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 600px) {
